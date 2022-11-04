@@ -7,5 +7,5 @@ setup(name="app-sbioutils",
       author="",
       authoer_email="",
       url='https://github.com/Superbio-ai/app-sbioutils',
-      install_requires=[boto3, requests]
+      install_requires=['requests==2.22.0', 'boto3==1.21.27']
 )
