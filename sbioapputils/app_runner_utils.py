@@ -129,7 +129,7 @@ class AppRunnerUtils:
         token = cls.get_api_token()
         api_url = os.environ.get("SBIO_API_URL")
         headers = {'Authorization': f'Bearer {token}'}
-        response = requests.get(f'{api_url}/api/jobs/{job_id}/config/version=v2', headers=headers)
+        response = requests.get(f'{api_url}/api/jobs/{job_id}/config?version=v2', headers=headers)
         if response.status_code == 200:
             return response.json()['config']
         else:
