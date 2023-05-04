@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=65"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "sbioapputils"
+version = "1.0.8"
+authors = [
+  { name="Superbio AI", email="smorgan@superbio.ai" },
+]
+description = "Utilities for developing apps with Superbio"
+readme = "README.md"
+requires-python = ">=3.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    'Intended Audience :: Developers',
+    'Topic :: Software Development :: Build Tools',
+    "Operating System :: OS Independent",
+]
+dependencies = ['requests==2.22.0', 'boto3==1.21.27','pandas==1.2.5', 'anndata==0.8.0', 'scanpy==1.9.1', 'numpy==1.21']
+[project.urls]
+"Homepage" = "https://github.com/Superbio-ai/app-sbioutils"
+"Bug Tracker" = "https://github.com/Superbio-ai/app-sbioutils/issues"

@@ -1,0 +1,20 @@
+Metadata-Version: 2.1
+Name: sbioapputils
+Version: 1.0.8
+Summary: Utilities for developing apps with Superbio
+Home-page: https://github.com/Superbio-ai/app-sbioutils
+Author: Superbio AI
+Author-email: Superbio AI <smorgan@superbio.ai>
+Project-URL: Homepage, https://github.com/Superbio-ai/app-sbioutils
+Project-URL: Bug Tracker, https://github.com/Superbio-ai/app-sbioutils/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.0
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# sbio
+Utilities for developing apps with Superbio
