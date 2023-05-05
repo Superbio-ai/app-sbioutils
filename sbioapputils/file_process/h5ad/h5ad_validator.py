@@ -5,10 +5,10 @@ from anndata import AnnData
 from scanpy.get import _get_obs_rep
 from scipy.sparse import issparse
 
-from file_process.exceptions import NoColumnsError, ModelFileValidationVariablesError, NoXExpression, \
+from ..exceptions import NoColumnsError, ModelFileValidationVariablesError, NoXExpression, \
     DataIsNormalized, DataIsNotFinite
-from file_process.h5ad.schemas import SbioModelDataForH5ad
-from file_process.logger import logger
+from .schemas import SbioModelDataForH5ad
+from ..logger import logger
 
 
 class H5ADValidator:

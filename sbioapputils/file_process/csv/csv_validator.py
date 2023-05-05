@@ -2,9 +2,10 @@ from typing import Optional
 
 from pandas import DataFrame
 
-from file_process.exceptions import NotAllTargetsError, NotSomeTargetsError, ModelFileValidationVariablesError, \
+from ..exceptions import NotAllTargetsError, NotSomeTargetsError, ModelFileValidationVariablesError, \
     CustomValidationException
-from file_process.csv.schemas import TabularValidationRules, SbioModelDataForCsv, ColumnValidationRule
+
+from .schemas import TabularValidationRules, SbioModelDataForCsv, ColumnValidationRule
 
 
 class CSVValidator:

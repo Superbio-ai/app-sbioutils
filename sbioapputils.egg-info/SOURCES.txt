@@ -2,7 +2,6 @@ LICENSE
 README.md
 pyproject.toml
 setup.py
-sbioapputils/__init__.py
 sbioapputils.egg-info/PKG-INFO
 sbioapputils.egg-info/SOURCES.txt
 sbioapputils.egg-info/dependency_links.txt

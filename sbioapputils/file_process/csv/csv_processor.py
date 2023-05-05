@@ -5,11 +5,11 @@ import pandas as pd
 from numpy import number, nan
 from pandas.errors import ParserError
 
-from file_process.base import FileProcessorBase
-from file_process.constants import PREVIEW_ROWS_COUNT
-from file_process.csv.csv_validator import CSVValidator
-from file_process.csv.schemas import SbioModelDataForCsv
-from file_process.exceptions import DelimiterError
+from ..base import FileProcessorBase
+from ..constants import PREVIEW_ROWS_COUNT
+from .csv_validator import CSVValidator
+from .schemas import SbioModelDataForCsv
+from ..exceptions import DelimiterError
 
 
 class CSVFileProcessor(FileProcessorBase):

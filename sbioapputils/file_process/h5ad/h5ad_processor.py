@@ -4,10 +4,10 @@ from typing import List, Optional
 import anndata
 import pandas as pd
 
-from file_process.base import FileProcessorBase
-from file_process.constants import PREVIEW_ROWS_COUNT
-from file_process.h5ad.h5ad_validator import H5ADValidator
-from file_process.h5ad.schemas import SbioModelDataForH5ad
+from ..base import FileProcessorBase
+from ..constants import PREVIEW_ROWS_COUNT
+from .h5ad_validator import H5ADValidator
+from .schemas import SbioModelDataForH5ad
 
 
 class H5ADFileProcessor(FileProcessorBase):
