@@ -1,91 +1,76 @@
+from sbioapputils.app_runner.constants import TITLE_STR, DEMO_PATH_STR
+
 upload_options = ['csv_template', 'image_template', 'sc_template']
 
-csv_template = {
-    "allowedFormats": {
+
+class TemplateBase:
+    disabled = False
+    uploadTypes = [
+        {
+            "title": "Local",
+            "type": "local"
+        },
+        {
+            "title": "Remote",
+            "type": "remote"
+        }
+    ]
+
+    def __init__(self, key: str, value: dict):
+        self.name = key
+        self.title = value[TITLE_STR]
+        if value.get(DEMO_PATH_STR):
+            self.demoDataDetails = {
+                'description': value['demo_description'],
+                'filePath': value['demo_path'],
+                'fileName': value['demo_path'].split('/')[-1],
+                'fileSource': [{'title': 'Data Source', 'url': value['url']}]
+            }
+
+
+class CSVTemplate(TemplateBase):
+    allowedFormats = {
         "fileExtensions": ["csv", "tsv", "txt"],
         "title": ".csv, .tsv or .txt",
         "value": ""
-    },
-    "dataStructure": "Data should be in .csv, .tsv or .txt format",
-    "disabled": False,
-    "name": "table",
-    "supportsPreview": True,
-    "title": "Input Tabular Data",
-    "uploadTypes": [
-        {
-            "title": "Local",
-            "type": "local"
-        },
-        {
-            "title": "Remote",
-            "type": "remote"
-        }
-    ]
-}
+    }
+    dataStructure = "Data should be in .csv, .tsv or .txt format"
+    name = "table"
+    supportsPreview = True
+    title = "Input Tabular Data"
 
-image_template = {
-    "allowedFormats": {
+
+class ImageTemplate(TemplateBase):
+    allowedFormats = {
         "fileExtensions": ["zip"],
         "title": ".zip",
         "value": ""
-    },
-    "dataStructure": "Images should be provided in a .zip compressed file",
-    "disabled": False,
-    "name": "image",
-    "supportsPreview": False,
-    "title": "Input Image Data",
-    "uploadTypes": [
-        {
-            "title": "Local",
-            "type": "local"
-        },
-        {
-            "title": "Remote",
-            "type": "remote"
-        }
-    ]
-}
+    }
+    dataStructure = "Images should be provided in a .zip compressed file"
+    name = "image"
+    supportsPreview = False
+    title = "Input Image Data"
 
-sc_template = {
-    "allowedFormats": {
+
+class SCTemplate(TemplateBase):
+    allowedFormats = {
         "fileExtensions": ["h5ad", "h5"],
         "title": ".h5ad or .h5",
         "value": ""
-    },
-    "dataStructure": "Data should be in .h5ad or .h5 format",
-    "disabled": False,
-    "name": "anndata",
-    "supportsPreview": True,
-    "title": "Input Annotated Data",
-    "uploadTypes": [
-        {
-            "title": "Local",
-            "type": "local"
-        },
-        {
-            "title": "Remote",
-            "type": "remote"
-        }
-    ]
-}
+    }
+    dataStructure = "Data should be in .h5ad or .h5 format"
+    name = "anndata"
+    supportsPreview = True
+    title = "Input Annotated Data"
 
-default_template = {
-    "allowedFormats": {
-        "fileExtensions": [],
-        "title": "",
-        "value": ""
-    },
-    "disabled": False,
-    "supportsPreview": False,
-    "uploadTypes": [
-        {
-            "title": "Local",
-            "type": "local"
-        },
-        {
-            "title": "Remote",
-            "type": "remote"
-        }
-    ],
-    "dataStructure": ""
-}
+
+# default_template = {
+#     "allowedFormats": {
+#         "fileExtensions": [],
+#         "title": "",
+#         "value": ""
+#     },
+#     "supportsPreview": False,
+#
+#     "dataStructure": ""
+# }

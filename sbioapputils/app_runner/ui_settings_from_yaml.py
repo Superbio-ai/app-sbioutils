@@ -1,40 +1,55 @@
+from typing import List
+
 import yaml
 import os
 import json
 from templates import csv_template, image_template, sc_template, default_template
 
 
-def _define_files_from_yaml(yaml_dict):
-    input_files = []
-    if yaml_dict['input_settings'].get('upload_options'):
-        for key in yaml_dict['input_settings']['upload_options'].keys():
-            if yaml_dict['input_settings']['upload_options'][key]['type'] == 'table':
-                input_element = csv_template.copy()
-            elif yaml_dict['input_settings']['upload_options'][key]['type'] == 'image':
-                input_element = image_template.copy()
-            elif yaml_dict['input_settings']['upload_options'][key]['type'] == 'single_cell':
-                input_element = sc_template.copy()
-            else:
-                print("No template is available for this data modality. Some parts of the uploadOptions configuration may need to be entered manually")
-                input_element = default_template.copy()
-                if yaml_dict['input_settings'].get('data_structure'):
-                    input_element['dataStructure'] = yaml_dict['input_settings']['data_structure']
-                if yaml_dict['input_settings'].get('file_extensions'):
-                    input_element['allowedFormats']['fileExtensions'] = yaml_dict['input_settings']['file_extensions']
-                    strout = ' or '.join(map(str, yaml_dict['input_settings']['file_extensions']))
-                    input_element['allowedFormats']['title'] = strout
 
-            input_element['name'] = key
-            input_element['title'] = yaml_dict['input_settings']['upload_options'][key]['title']
-            if yaml_dict['input_settings']['upload_options'][key].get('demo_path'):
-                input_element['demoDataDetails'] = {
-                    'description':yaml_dict['input_settings']['upload_options'][key]['demo_description'],
-                    'filePath':yaml_dict['input_settings']['upload_options'][key]['demo_path'],
-                    'fileName':yaml_dict['input_settings']['upload_options'][key]['demo_path'].split('/')[-1],
-                    'fileSource':[{                        'title': 'Data Source',                        'url':yaml_dict['input_settings']['upload_options'][key]['url']}]
-                    }
-            input_files.append(input_element)
+
+
+
+
+
+
+def _define_files_from_yaml(yaml_dict: dict):
+    input_files = []
+    upload_options = get_nested_value(yaml_dict, [INPUT_SETTINGS_STR, UPLOAD_OPTIONS_STR])
+    if not upload_options:
+        return None
+    for key, value in upload_options.items():
+        template = TYPE_TEMPLATE_MAP.get(value[TYPE_STR])
+        if template:
+            input_element = TYPE_TEMPLATE_MAP.get(value[TYPE_STR]).copy()
+        else:
+            print("No template is available for this data modality. "
+                  "Some parts of the uploadOptions configuration may need to be entered manually")
+            input_element = _create_custom_modality(yaml_dict)
+
+        input_element['name'] = key
+        input_element['title'] = value[TITLE_STR]
+        if value.get(DEMO_PATH_STR):
+            input_element['demoDataDetails'] = {
+                'description': value['demo_description'],
+                'filePath': value['demo_path'],
+                'fileName': value['demo_path'].split('/')[-1],
+                'fileSource': [{'title': 'Data Source', 'url': value['url']}]
+            }
+        input_files.append(input_element)
     return input_files
+
+
+def _create_custom_modality(yaml_dict):
+    input_element = default_template.copy()
+    data_structure = get_nested_value(yaml_dict, [INPUT_SETTINGS_STR, DATA_STRUCTURE_STR])
+    if data_structure:
+        input_element['dataStructure'] = data_structure
+    file_extensions = get_nested_value(yaml_dict, [INPUT_SETTINGS_STR, FILE_EXTENSIONS_STR])
+    if file_extensions:
+        input_element['allowedFormats']['fileExtensions'] = file_extensions
+        input_element['allowedFormats']['title'] = ' or '.join(map(str, file_extensions))
+    return input_element
  
 
 def define_settings_from_yaml(yaml_loc):
@@ -269,4 +284,4 @@ def _payload_from_folder(folder_loc):
             full_files.append({'file': figure, 'title': figure.split('/')[-1].split('.')[0]})
         results_for_payload['figures'] = [full_files]
 
-    return results_for_payload, additional_artifacts            
+    return results_for_payload, additional_artifacts
