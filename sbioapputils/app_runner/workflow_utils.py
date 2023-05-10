@@ -105,7 +105,7 @@ def validate_config(request, job_id):
     if no_type:
         warnings.warn('Some parameters do not have their datatype specified: {}'.format(no_type))
 
-    if len(invalid_value) > 0:
+    if invalid_value > 0:
         raise Exception(f"These parameters have invalid values (out of specified range of allowed values): {invalid_value}")
         
     return(request, name, stages, parameters)
