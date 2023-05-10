@@ -102,7 +102,7 @@ def validate_config(request, job_id):
     if not all(param in request.keys() for param in no_type):
         raise Exception(f"These parameters have an incorrect data type: {list(set(wrong_data_types) - set(request.keys()))}")
 
-    if len(no_type) > 0:
+    if no_type:
         warnings.warn('Some parameters do not have their datatype specified: {}'.format(no_type))
 
     if len(invalid_value) > 0:
