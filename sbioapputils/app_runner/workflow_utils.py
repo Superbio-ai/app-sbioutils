@@ -108,7 +108,7 @@ def validate_config(request, job_id):
     if invalid_value > 0:
         raise Exception(f"These parameters have invalid values (out of specified range of allowed values): {invalid_value}")
         
-    return(request, name, stages, parameters)
+    return request, name, stages, parameters
 
 
 def parse_arguments():
