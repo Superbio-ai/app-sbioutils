@@ -9,6 +9,29 @@ from sbioapputils.app_runner_utils import AppRunnerUtils
 from sbioapputils.workflow_utils import validate_config
 
 
+def _process_stage(stage, stages, config):
+    logging.info(f'Stage {stage} starting')
+    start_time = time.time()
+    sub_process_list = ['python', "app/" + stages[stage]['file']]
+    for key, value in config.items():
+        sub_process_list.append("--" + key)
+        sub_process_list.append(str(value))
+    process = subprocess.Popen(sub_process_list, stdout=subprocess.PIPE)
+    while True:
+        line = process.stdout.readline()
+        if not line:
+            break
+        logging.info(line.rstrip())
+
+    if process.returncode is not None:
+        logging.error(f"Error occurred in subprocess {stage}")
+        logging.error(process.returncode)
+        raise Exception(f"Error occurred in subprocess {stage}, with code {process.returncode}")
+
+    end_time = time.time()
+    logging.info(f'Stage {stage} completed in {end_time - start_time} seconds')
+
+
 def main():
     job_log_file = 'job.log'
     AppRunnerUtils.set_logging(job_log_file)
@@ -19,29 +42,8 @@ def main():
         logging.info(f'Job config: {config}')
         AppRunnerUtils.set_job_running(job_id)
         logging.info(f'Job {job_id} is running')
-
-        # run entry points: need to add error handling / capture here
         for stage in stages.keys():
-            logging.info(f'Stage {stage} starting')
-            start_time = time.time()
-            sub_process_list = ['python', "app/" + stages[stage]['file']]
-            for key, value in config.items():
-                sub_process_list.append("--" + key)
-                sub_process_list.append(str(value))
-            process = subprocess.Popen(sub_process_list, stdout=subprocess.PIPE)
-            while True:
-                line = process.stdout.readline()
-                if not line:
-                    break
-                logging.info(line.rstrip())
-
-            if process.returncode is not None:
-                logging.error(f"Error occurred in subprocess {stage}")
-                logging.error(process.returncode)
-                raise Exception(f"Error occurred in subprocess {stage}, with code {process.returncode}")
-
-            end_time = time.time()
-            logging.info(f'Stage {stage} completed in {end_time - start_time} seconds')
+            _process_stage(stage, stages, config)
 
         # upload results
         with open('results_for_payload.json', 'r') as f:
@@ -62,6 +64,7 @@ def main():
     finally:
         # upload log files to S3
         AppRunnerUtils.upload_file(job_id, job_log_file)
+
 
 if __name__ == '__main__':
     main()

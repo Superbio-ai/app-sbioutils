@@ -97,10 +97,10 @@ def validate_config(request, job_id):
             pass
 
     if not all(param in request.keys() for param in no_default):
-        raise Exception(f"These required parameters are not specified: {list(set(no_default) - set(request.keys()))}")
+        raise Exception(f"These required parameters are not specified: {no_default}")
 
     if not all(param in request.keys() for param in no_type):
-        raise Exception(f"These parameters have an incorrect data type: {list(set(wrong_data_types) - set(request.keys()))}")
+        raise Exception(f"These parameters have an incorrect data type: {wrong_data_types}")
 
     if len(no_type) > 0:
         warnings.warn('Some parameters do not have their datatype specified: {}'.format(no_type))
