@@ -4,13 +4,19 @@ import warnings
 import yaml
 
 
-def _parse_workflow():
+def _parse_workflow(request):
     """Helper function to parse the workflow configuration."""
-    with open("app/workflow.yml", "r") as stream:
+    if request.get('workflow_name'):
+        workflow_loc=f"app/{request['workflow_name']}.yml"
+    else:
+        workflow_loc="app/workflow.yml"
+        
+    with open(workflow_loc, "r") as stream:
         try:
             yaml_dict = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
+            
     name = yaml_dict['name']
     stages = yaml_dict['stages']
     parameters = yaml_dict['parameters']
@@ -27,7 +33,7 @@ def dir_path(string):
 
 def validate_config(request, job_id):
     """Function to validate the request config."""
-    name, stages, parameters = _parse_workflow()
+    name, stages, parameters = _parse_workflow(request)
     for key, value in request['input_files'].items():
         request[key] = value
     request['job_id'] = job_id
