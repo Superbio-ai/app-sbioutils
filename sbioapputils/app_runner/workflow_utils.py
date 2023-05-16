@@ -140,4 +140,4 @@ def parse_arguments():
     # Parse the arguments
     args, unknown = parser.parse_known_args()
 
-    return(args)
+    return args
