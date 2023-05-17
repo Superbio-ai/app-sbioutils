@@ -7,9 +7,9 @@ import yaml
 def _parse_workflow(request):
     """Helper function to parse the workflow configuration."""
     if request.get('workflow_name'):
-        workflow_loc = f"app/{request['workflow_name']}.yml"
+        workflow_loc=f"app/{request['workflow_name']}.yml"
     else:
-        workflow_loc = "app/workflow.yml"
+        workflow_loc="app/workflow.yml"
         
     with open(workflow_loc, "r") as stream:
         try:
@@ -45,44 +45,43 @@ def validate_config(request, job_id):
     wrong_data_types = []
     invalid_value = []
 
-    for key, parameter_value in parameters.items():
-        request_value = request[key]
+    for key in parameters.keys():
 
         # Check if type is present
-        if not parameter_value.get('type'):
+        if not parameters[key].get('type'):
             no_type.append(key)
         else:
             # Check if type is correct
             try:
-                if not isinstance(request_value, parameter_value['type']):
+                if not isinstance(request[key], parameters[key]['type']):
                     wrong_data_types.append(key)
             # On error if config[key] not present
             except KeyError:
                 pass
 
         # Check if default is present
-        if not parameter_value.get('default'):
+        if not parameters[key].get('default'):
             no_default.append(key)
         else:
-            default[key] = parameter_value['default']
+            default[key] = parameters[key]['default']
             # Set defaults if not present
             if not request.get(key):
-                request_value = parameter_value['default']
+                request[key] = parameters[key]['default']
 
-        if parameter_value.get('user_defined'):
-            if parameter_value['user_defined'] == 'True':
-                if parameter_value['type'] in ['int', 'float']:
+        if parameters[key].get('user_defined'):
+            if parameters[key]['user_defined'] == 'True':
+                if parameters[key]['type'] in ['int', 'float']:
                     # Check between min and max
-                    if parameter_value.get('max_value'):
-                        if request_value > parameter_value['max_value']:
+                    if parameters[key].get('max_value'):
+                        if (request[key] > parameters[key]['max_value']):
                             invalid_value.append(key)
-                    if parameter_value.get('min_value'):
-                        if request_value < parameter_value['min_value']:
+                    if parameters[key].get('min_value'):
+                        if (request[key] < parameters[key]['min_value']):
                             invalid_value.append(key)
 
-                elif parameter_value['type'] == 'str':
-                    if parameter_value.get('from_data'):
-                        if parameter_value['from_data'] == 'True':
+                elif parameters[key]['type'] == 'str':
+                    if parameters[key].get('from_data'):
+                        if parameters[key]['from_data'] == 'True':
                             dropdown = False
                         else:
                             dropdown = True
@@ -91,15 +90,15 @@ def validate_config(request, job_id):
 
                     # Category settings
                     if dropdown:
-                        if request_value not in parameter_value['options']:
+                        if request[key] not in parameters[key]['options']:
                             invalid_value.append(key)
 
         # Create directory if needed
         try:
-            if str(request_value)[-1] == '/':
-                if not os.path.exists(request_value):
-                    os.mkdir(request_value)
-                    #print("Directory '% s' created" % request_value)
+            if str(request[key])[-1] == '/':
+                if not os.path.exists(request[key]):
+                    os.mkdir(request[key])
+                    #print("Directory '% s' created" % request[key])
         except KeyError:
             pass
 
@@ -112,7 +111,7 @@ def validate_config(request, job_id):
     if no_type:
         warnings.warn('Some parameters do not have their datatype specified: {}'.format(no_type))
 
-    if invalid_value:
+    if invalid_value > 0:
         raise Exception(f"These parameters have invalid values (out of specified range of allowed values): {invalid_value}")
         
     return request, name, stages, parameters
@@ -126,12 +125,12 @@ def parse_arguments():
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
 
     # Loop over the parameters in the workflow configuration
-    for key, parameter_value in parameters.items():
+    for key in parameters.keys():
         # If the parameter type is float, add a float argument to the parser
-        if parameter_value['type'] == 'float':
+        if parameters[key]['type'] == 'float':
             parser.add_argument(f"--{key}", type=float)
         # If the parameter type is int, add an integer argument to the parser
-        elif parameter_value['type'] == 'int':
+        elif parameters[key]['type'] == 'int':
             parser.add_argument(f"--{key}", type=int)
         # Otherwise, add a string argument to the parser
         else:
@@ -140,4 +139,4 @@ def parse_arguments():
     # Parse the arguments
     args, unknown = parser.parse_known_args()
 
-    return args
+    return(args)
