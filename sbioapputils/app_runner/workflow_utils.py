@@ -7,9 +7,9 @@ import yaml
 def _parse_workflow(request):
     """Helper function to parse the workflow configuration."""
     if request.get('workflow_name'):
-        workflow_loc=f"app/{request['workflow_name']}.yml"
+        workflow_loc = f"app/{request['workflow_name']}.yml"
     else:
-        workflow_loc="app/workflow.yml"
+        workflow_loc = "app/workflow.yml"
         
     with open(workflow_loc, "r") as stream:
         try:
@@ -80,7 +80,6 @@ def validate_config(request, job_id):
             if str(request[key])[-1] == '/':
                 if not os.path.exists(request[key]):
                     os.mkdir(request[key])
-                    #print("Directory '% s' created" % request[key])
         except KeyError:
             pass
 
