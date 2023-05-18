@@ -40,58 +40,40 @@ def validate_config(request, job_id):
 
     # Check all required parameters are provided
     no_default = []
-    default = {}
     no_type = []
     wrong_data_types = []
     invalid_value = []
 
     for key in parameters.keys():
 
-        # Check if type is present
-        if not parameters[key].get('type'):
-            no_type.append(key)
-        else:
-            # Check if type is correct
-            try:
-                if not isinstance(request[key], parameters[key]['type']):
-                    wrong_data_types.append(key)
-            # On error if config[key] not present
-            except KeyError:
-                pass
-
         # Check if default is present
         if not parameters[key].get('default'):
             no_default.append(key)
-        else:
-            default[key] = parameters[key]['default']
-            # Set defaults if not present
-            if not request.get(key):
-                request[key] = parameters[key]['default']
+        elif key not in request:
+            request[key] = parameters[key]['default']
 
-        if parameters[key].get('user_defined'):
-            if parameters[key]['user_defined'] == 'True':
-                if parameters[key]['type'] in ['int', 'float']:
-                    # Check between min and max
-                    if parameters[key].get('max_value'):
-                        if (request[key] > parameters[key]['max_value']):
-                            invalid_value.append(key)
-                    if parameters[key].get('min_value'):
-                        if (request[key] < parameters[key]['min_value']):
-                            invalid_value.append(key)
+        # Check if type is present
+        if not parameters[key].get('type'):
+            no_type.append(key)
+        elif not isinstance(request[key], parameters[key]['type']):
+            wrong_data_types.append(key)
 
-                elif parameters[key]['type'] == 'str':
-                    if parameters[key].get('from_data'):
-                        if parameters[key]['from_data'] == 'True':
-                            dropdown = False
-                        else:
-                            dropdown = True
-                    else:
-                        dropdown = True
+        if parameters[key].get('user_defined') == 'True':
+            if parameters[key]['type'] in ['int', 'float']:
+                # Check between min and max
+                if parameters[key].get('max_value'):
+                    if request[key] > parameters[key]['max_value']:
+                        invalid_value.append(key)
+                if parameters[key].get('min_value'):
+                    if request[key] < parameters[key]['min_value']:
+                        invalid_value.append(key)
 
-                    # Category settings
-                    if dropdown:
-                        if request[key] not in parameters[key]['options']:
-                            invalid_value.append(key)
+            elif parameters[key]['type'] == 'str':
+                dropdown = not parameters[key].get('from_data') == 'True'
+                # Category settings
+                if dropdown:
+                    if request[key] not in parameters[key]['options']:
+                        invalid_value.append(key)
 
         # Create directory if needed
         try:
@@ -111,7 +93,7 @@ def validate_config(request, job_id):
     if no_type:
         warnings.warn('Some parameters do not have their datatype specified: {}'.format(no_type))
 
-    if invalid_value > 0:
+    if invalid_value:
         raise Exception(f"These parameters have invalid values (out of specified range of allowed values): {invalid_value}")
         
     return request, name, stages, parameters
@@ -139,4 +121,4 @@ def parse_arguments():
     # Parse the arguments
     args, unknown = parser.parse_known_args()
 
-    return(args)
+    return args
