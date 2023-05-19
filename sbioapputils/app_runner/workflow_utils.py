@@ -1,10 +1,10 @@
 import argparse
 import os
-import warnings
 import yaml
+from pathlib import Path
 
 
-def _parse_workflow(request):
+def parse_workflow(request):
     """Helper function to parse the workflow configuration."""
     if request.get('workflow_name'):
         workflow_loc = f"app/{request['workflow_name']}.yml"
@@ -17,10 +17,9 @@ def _parse_workflow(request):
         except yaml.YAMLError as exc:
             print(exc)
             
-    name = yaml_dict['name']
     stages = yaml_dict['stages']
     parameters = yaml_dict['parameters']
-    return name, stages, parameters
+    return stages, parameters
 
 
 def dir_path(string):
@@ -31,31 +30,41 @@ def dir_path(string):
         raise NotADirectoryError(string)
 
 
-def validate_config(request, job_id):
-    """Function to validate the request config."""
-    name, stages, parameters = _parse_workflow(request)
-    for key, value in request['input_files'].items():
-        request[key] = value
+def set_defaults(request, parameters, job_id):
+    """Request from FE, and parameters from workflow yaml"""
     request['job_id'] = job_id
+    
+    #set defaults where not present
+    for key in parameters.keys():
+        # Check if default is present
+        if key not in request:
+            request[key] = parameters[key]['default']
+        
+    return(request)
+            
 
-    # Check all required parameters are provided
-    no_default = []
-    no_type = []
+def create_directories(request, parameters):
+    """Request from FE, and parameters from workflow yaml"""
+    
+    #set defaults where not present
+    for key in parameters.keys():
+            
+        # Create directory if Path type
+        if (str(request[key])[-1] == '/') and (parameters[key]['type']==Path):
+            if not os.path.exists(request[key]):
+                os.mkdir(request[key])
+
+
+def validate_request(request, parameters):
+    """Validating request against workflow yaml"""
+    
     wrong_data_types = []
     invalid_value = []
 
     for key in parameters.keys():
-
-        # Check if default is present
-        if not parameters[key].get('default'):
-            no_default.append(key)
-        elif key not in request:
-            request[key] = parameters[key]['default']
-
+        
         # Check if type is present
-        if not parameters[key].get('type'):
-            no_type.append(key)
-        elif not isinstance(request[key], parameters[key]['type']):
+        if not isinstance(request[key], parameters[key]['type']):
             wrong_data_types.append(key)
 
         if parameters[key].get('user_defined') == 'True':
@@ -74,33 +83,19 @@ def validate_config(request, job_id):
                 if dropdown:
                     if request[key] not in parameters[key]['options']:
                         invalid_value.append(key)
-
-        # Create directory if needed
-        try:
-            if str(request[key])[-1] == '/':
-                if not os.path.exists(request[key]):
-                    os.mkdir(request[key])
-        except KeyError:
-            pass
-
-    if not all(param in request.keys() for param in no_default):
-        raise Exception(f"These required parameters are not specified: {no_default}")
-
-    if not all(param in request.keys() for param in no_type):
-        raise Exception(f"These parameters have an incorrect data type: {wrong_data_types}")
-
-    if no_type:
-        warnings.warn('Some parameters do not have their datatype specified: {}'.format(no_type))
-
-    if invalid_value:
-        raise Exception(f"These parameters have invalid values (out of specified range of allowed values): {invalid_value}")
+    output_errors = ""
+    if wrong_data_types:
+        output_errors = output_errors + f"These parameters have an invalid data type: {wrong_data_types} \n"
         
-    return request, name, stages, parameters
+    if invalid_value:
+        output_errors = output_errors + f"These parameters have invalid values (out of specified range of allowed values): {invalid_value} \n"
+        
+    return output_errors
 
 
 def parse_arguments():
     # Load workflow configuration
-    name, stages, parameters = _parse_workflow()
+    name, stages, parameters = parse_workflow()
 
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
