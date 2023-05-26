@@ -148,6 +148,66 @@ def _define_files_from_yaml(yaml_dict):
     return input_files
  
 
+def _define_from_numeric(para_dict, key, input_parameters):
+    
+    if para_dict['type'] == 'int':
+        input_type = 'integer'
+    else:
+        input_type = 'float'
+    input_parameters.append({
+        "name": key,
+        "title": para_dict['title'],
+        "tooltip": para_dict['tooltip'],
+        "type": input_type,
+        "default_value": para_dict['default'],
+        "input_type": "slider",
+        "increment": para_dict['increment'],
+        "max_value": para_dict['max_value'],
+        "max_value_included": True,
+        "min_value": para_dict['min_value'],
+        "min_value_inclusive": True
+    })
+    return(input_parameters)
+    
+
+def _define_from_string(para_dict, key, input_parameters, inputs_require_files):
+    
+    if para_dict.get('from_data'):
+        if para_dict['from_data'] == 'True':
+            # Create data-defined settings
+            input_parameters.append({
+                "name": key,
+                "title": para_dict['title'],
+                "tooltip": para_dict['tooltip'],
+                "type": 'str',
+                "default_value":{'label': para_dict['default'],'value': para_dict['default']},
+                "input_type": "dropdown",
+                "options": []
+            })
+            inputs_require_files.append(key)
+            dropdown = False
+        else:
+            dropdown = True
+    else:
+        dropdown = True
+            
+    # Category settings
+    if dropdown:
+        option_list = []
+        for option in para_dict['options']:
+            option_list.append({"label": option, "value": option})
+        input_parameters.append({
+            "name": key,
+            "title": para_dict['title'],
+            "tooltip": para_dict['tooltip'],
+            "type": 'str',
+            "default_value":{'label': para_dict['default'],'value': para_dict['default']},
+            "input_type": "dropdown",
+            "options": option_list
+        })
+    return(input_parameters, inputs_require_files)
+    
+
 def define_settings_from_yaml(yaml_dict):
     '''
     _define_files_from_yaml is a helper function that returns a list of input file elements based on the information in the YAML file. Each input file element is a dictionary that specifies the properties of an input file that can be uploaded to the web application. The function checks the type of the input file (table, image, or single cell) and uses a corresponding template from the templates module to set the default values for the file properties.
@@ -178,58 +238,10 @@ def define_settings_from_yaml(yaml_dict):
                 # Numeric settings
                 if parameters[key].get('type'):
                     if parameters[key]['type'] in ['int', 'float']:
-                        if parameters[key]['type'] == 'int':
-                            input_type = 'integer'
-                        else:
-                            input_type = 'float'
-                        input_parameters.append({
-                            "name": key,
-                            "title": parameters[key]['title'],
-                            "tooltip": parameters[key]['tooltip'],
-                            "type": input_type,
-                            "default_value": parameters[key]['default'],
-                            "input_type": "slider",
-                            "increment": parameters[key]['increment'],
-                            "max_value": parameters[key]['max_value'],
-                            "max_value_included": True,
-                            "min_value": parameters[key]['min_value'],
-                            "min_value_inclusive": True
-                        })
+                        input_parameters = _define_from_numeric(parameters[key], key, input_parameters)
                     
                     elif parameters[key]['type'] == 'str':
-                        if parameters[key].get('from_data'):
-                            if parameters[key]['from_data'] == 'True':
-                                # Create data-defined settings
-                                input_parameters.append({
-                                    "name": key,
-                                    "title": parameters[key]['title'],
-                                    "tooltip": parameters[key]['tooltip'],
-                                    "type": 'str',
-                                    "default_value":{'label': parameters[key]['default'],'value': parameters[key]['default']},
-                                    "input_type": "dropdown",
-                                    "options": []
-                                })
-                                inputs_require_files.append(key)
-                                dropdown = False
-                            else:
-                                dropdown = True
-                        else:
-                            dropdown = True
-                            
-                        # Category settings
-                        if dropdown:
-                            option_list = []
-                            for option in parameters[key]['options']:
-                                option_list.append({"label": option, "value": option})
-                            input_parameters.append({
-                                "name": key,
-                                "title": parameters[key]['title'],
-                                "tooltip": parameters[key]['tooltip'],
-                                "type": 'str',
-                                "default_value":{'label': parameters[key]['default'],'value': parameters[key]['default']},
-                                "input_type": "dropdown",
-                                "options": option_list
-                            })
+                        input_parameters, inputs_require_files = _define_from_string(parameters[key], key, input_parameters, inputs_require_files)
                 else:
                     raise Exception(f"Please define 'type' for parameter {key}")
  
