@@ -62,7 +62,7 @@ def main():
         
         output_errors = validate_request(parameters, job_id)
         if output_errors:
-            raise Exception(f"Invalid json request:\n {output errors}")
+            raise Exception(f"Invalid json request:\n {output_errors}")
             
         logging.info(f'Job config: {request}')
         
