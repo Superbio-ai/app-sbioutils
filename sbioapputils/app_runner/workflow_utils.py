@@ -71,10 +71,10 @@ def validate_request(request, parameters):
             if parameters[key]['type'] in ['int', 'float']:
                 # Check between min and max
                 if parameters[key].get('max_value'):
-                    if request[key] > parameters[key]['max_value']:
+                    if request[key] > float(parameters[key]['max_value']):
                         invalid_value.append(key)
                 if parameters[key].get('min_value'):
-                    if request[key] < parameters[key]['min_value']:
+                    if request[key] < float(parameters[key]['min_value']):
                         invalid_value.append(key)
 
             elif eval(parameters[key]['type']) == 'str':
