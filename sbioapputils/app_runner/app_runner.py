@@ -6,7 +6,7 @@ import sys
 import json
 
 from sbioapputils.app_runner.app_runner_utils import AppRunnerUtils
-from sbioapputils.app_runner.workflow_utils import parse_workflow, set_defaults, create_directories, validate_request
+from sbioapputils.app_runner.workflow_utils import parse_workflow, set_defaults, set_numeric, create_directories, validate_request
 
 
 def _process_stage(stage_name, stage_value, config_subprocess_list):
@@ -57,6 +57,7 @@ def main():
         request = AppRunnerUtils.get_job_config(job_id)
         stages, parameters = parse_workflow(request)
         request = set_defaults(request, parameters, job_id)
+        request = set_numeric(request, parameters)
         create_directories(request, parameters)
         logging.info('Workflow parsed')
         logging.info(f'Job config: {request}')

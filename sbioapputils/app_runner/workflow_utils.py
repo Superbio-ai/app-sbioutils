@@ -30,6 +30,19 @@ def dir_path(string):
         raise NotADirectoryError(string)
 
 
+def set_numeric(request, parameters):
+    """Request from FE, and parameters from workflow yaml"""
+    
+    #set numeric where required
+    for key in parameters.keys():
+        if eval(parameters[key]['type'])==int:
+            request[key] = int(request[key])
+        elif eval(parameters[key]['type'])==float:
+            request[key] = float(request[key])
+        
+    return(request)
+
+
 def set_defaults(request, parameters, job_id):
     """Request from FE, and parameters from workflow yaml"""
     request['job_id'] = job_id
