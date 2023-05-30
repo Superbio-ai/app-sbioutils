@@ -64,7 +64,7 @@ def validate_request(request, parameters):
     for key in parameters.keys():
         
         # Check if type is present
-        if not isinstance(request[key], parameters[key]['type']):
+        if not isinstance(request[key], eval(parameters[key]['type'])):
             wrong_data_types.append(key)
 
         if parameters[key].get('user_defined') == 'True':
@@ -77,7 +77,7 @@ def validate_request(request, parameters):
                     if request[key] < parameters[key]['min_value']:
                         invalid_value.append(key)
 
-            elif parameters[key]['type'] == 'str':
+            elif eval(parameters[key]['type']) == 'str':
                 dropdown = not parameters[key].get('from_data') == 'True'
                 # Category settings
                 if dropdown:
