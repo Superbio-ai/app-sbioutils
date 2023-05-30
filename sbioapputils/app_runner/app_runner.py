@@ -60,7 +60,7 @@ def main():
         create_directories(request, parameters)
         logging.info('Workflow parsed')
         
-        output_errors = validate_request(parameters, job_id)
+        output_errors = validate_request(request, parameters)
         if output_errors:
             raise Exception(f"Invalid json request:\n {output_errors}")
             
