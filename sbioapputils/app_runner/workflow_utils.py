@@ -65,13 +65,19 @@ def validate_request(request, parameters):
         
         # Check if type is present
         if not isinstance(request[key], eval(parameters[key]['type'])):
-            wrong_data_types.append(key)
+            print(request)
+            print(request[key])
+            print(parameters[key]['type'])
+            print(eval(parameters[key]['type']))
+            if eval(parameters[key]['type'])==Path:
+                if not request[key].startswith("/"):
+                    wrong_data_types.append(key)
+            else:
+                wrong_data_types.append(key)
 
         if parameters[key].get('user_defined') == 'True':
             if parameters[key]['type'] in ['int', 'float']:
                 # Check between min and max
-                print(key)
-                print(request[key])
                 if parameters[key].get('max_value'):
                     if float(request[key]) > float(parameters[key]['max_value']):
                         invalid_value.append(key)

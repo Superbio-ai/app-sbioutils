@@ -59,12 +59,11 @@ def main():
         request = set_defaults(request, parameters, job_id)
         create_directories(request, parameters)
         logging.info('Workflow parsed')
+        logging.info(f'Job config: {request}')
         
         output_errors = validate_request(request, parameters)
         if output_errors:
             raise Exception(f"Invalid json request:\n {output_errors}")
-            
-        logging.info(f'Job config: {request}')
         
         AppRunnerUtils.set_job_running(job_id)
         logging.info(f'Job {job_id} is running')
