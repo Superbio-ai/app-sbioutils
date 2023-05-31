@@ -8,7 +8,6 @@ import shutil
 def parse_workflow(request):
     """Helper function to parse the workflow configuration."""
     workflow_loc = "app/workflow.yml"
-    print(request['workflow_name'])
     if request.get('workflow_name'):
         src_file = f"app/{request['workflow_name']}.yml"
         if (os.path.exists(workflow_loc)) and not (os.path.samefile(src_file, workflow_loc)):
@@ -23,7 +22,6 @@ def parse_workflow(request):
             
     stages = yaml_dict['stages']
     parameters = yaml_dict['parameters']
-    print(parameters)
     
     return stages, parameters
 
@@ -131,20 +129,20 @@ def parse_arguments():
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
 
+    args = parser.parse_args()
+    print(args)
+
     # Loop over the parameters in the workflow configuration
     for key in parameters.keys():
         # If the parameter type is float, add a float argument to the parser
         if parameters[key]['type'] == 'float':
             parser.add_argument(f"--{key}", type=float)
-            print(f'{key} is float')
         # If the parameter type is int, add an integer argument to the parser
         elif parameters[key]['type'] == 'int':
             parser.add_argument(f"--{key}", type=int)
-            print(f'{key} is int')
         # Otherwise, add a string argument to the parser
         else:
             parser.add_argument(f"--{key}")
-            print(f'{key} is str')
     
     #loop over input files as well
     for key in yaml_dict['input_settings']['upload_options']:
@@ -152,8 +150,6 @@ def parse_arguments():
 
     # Parse the arguments
     args, unknown = parser.parse_known_args()
-    
-    print(len(unknown))
     
     if len(args)==0:
         raise Exception("No arguments have been passed")
