@@ -6,6 +6,7 @@ from pyflakes.api import isPythonFile, checkPath
 from pyflakes.reporter import _makeDefaultReporter
 import pycodestyle
 import sys
+from credentials import get_credentials
 
 
 def get_yaml(workflow_loc):
@@ -379,16 +380,19 @@ def run_pre_demo_steps(workflow_filename: str):
     workflow_loc = '/app/' + workflow_filename
     yaml_dict = get_yaml(workflow_loc)
     
+    print("Setting credentials")
+    get_credentials()
+    
     print("Validating yaml stages")
     valid_check = validate_yaml_stages(yaml_dict, style_check = True)
-    if not valid_check:
+    if valid_check:
         print("Stages have passed non-style checks")
     else:
-        raise Exception("Yaml stage checks failed")
+        raise Exception("yaml stage checks failed. See errors above")
     
     print("Validating yaml parameters")
     valid_check = validate_yaml_parameters(yaml_dict)
-    if not valid_check:
+    if valid_check:
         print("Parameters have passed checks")
     else:
         raise Exception("Yaml stage checks failed")
