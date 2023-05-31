@@ -2,14 +2,14 @@ import argparse
 import os
 import yaml
 from pathlib import Path
+import shutil
 
 
 def parse_workflow(request):
     """Helper function to parse the workflow configuration."""
     if request.get('workflow_name'):
-        workflow_loc = f"app/{request['workflow_name']}.yml"
-    else:
-        workflow_loc = "app/workflow.yml"
+        shutil.copy(f"app/{request['workflow_name']}.yml","app/workflow.yml")
+    workflow_loc = "app/workflow.yml"
         
     with open(workflow_loc, "r") as stream:
         try:
@@ -19,6 +19,7 @@ def parse_workflow(request):
             
     stages = yaml_dict['stages']
     parameters = yaml_dict['parameters']
+    
     return stages, parameters
 
 
@@ -112,7 +113,16 @@ def validate_request(request, parameters):
 
 def parse_arguments():
     # Load workflow configuration
-    name, stages, parameters = parse_workflow()
+    workflow_loc = "app/workflow.yml"
+        
+    with open(workflow_loc, "r") as stream:
+        try:
+            yaml_dict = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+            
+    parameters = yaml_dict['parameters']
+    
 
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
