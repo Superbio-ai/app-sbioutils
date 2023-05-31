@@ -32,27 +32,26 @@ def _run_pycodestyle(filename):
             
 
 def validate_yaml_stages(yaml_dict, style_check = False):
-    """Validating parameters from workflow yaml"""
-    stages_in = yaml_dict['stages']
-    stages = ['/app' + stage for stage in stages_in]
-    
+    """Validating parameters from workflow yaml"""    
     valid_check = True
     invalid_stage = []
     invalid_path = []
     code_errors = []
     
-    for key in stages.keys():
-
+    stages = []
+    for key in yaml_dict['stages'].keys():
+        stages.append('/app' + yaml_dict['stages'][key]['file'])
+        
         #catch common yaml formating errors and check target is a python file
-        for subkey, value in stages[key].items():
+        for subkey, value in yaml_dict['stages'][key].items():
             if ":" in subkey:
                 invalid_stage.append({key : subkey})
-            elif not isPythonFile(value):
-                invalid_path.append({key : subkey})
+        if not isPythonFile('/app' + yaml_dict['stages'][key]['file']):
+            invalid_path.append(key)
     
         #checking for code errors in scripts
         defaultReporter = _makeDefaultReporter()
-        error_flag = checkPath(value, reporter = defaultReporter)
+        error_flag = checkPath('/app' + yaml_dict['stages'][key]['file'], reporter = defaultReporter)
         if error_flag:
             code_errors.append(value)
     
@@ -67,10 +66,10 @@ def validate_yaml_stages(yaml_dict, style_check = False):
         print(f"Errors were found in these scripts: {code_errors}. Please check the printed messages to identify the errors")
         
     if style_check:
-        for key in stages.keys():
-            style_errors = _run_pycodestyle(stages[key]['file'])
+        for stage in stages:
+            style_errors = _run_pycodestyle(stage)
             if style_errors:
-                print(f"Style errors with file {stages[key]['file']}:")
+                print(f"Style errors with file {stage}:")
                 print(style_errors)
             
     return valid_check
