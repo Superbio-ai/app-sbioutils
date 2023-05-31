@@ -78,10 +78,6 @@ def validate_request(request, parameters):
         
         # Check if type is present
         if not isinstance(request[key], eval(parameters[key]['type'])):
-            print(request)
-            print(request[key])
-            print(parameters[key]['type'])
-            print(eval(parameters[key]['type']))
             if eval(parameters[key]['type'])==Path:
                 if not request[key].startswith("/"):
                     wrong_data_types.append(key)

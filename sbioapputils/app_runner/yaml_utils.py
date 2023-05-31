@@ -33,7 +33,8 @@ def _run_pycodestyle(filename):
 
 def validate_yaml_stages(yaml_dict, style_check = False):
     """Validating parameters from workflow yaml"""
-    stages = yaml_dict['stages']
+    stages_in = yaml_dict['stages']
+    stages = ['/app' + stage for stage in stages_in]
     
     valid_check = True
     invalid_stage = []
@@ -414,7 +415,7 @@ def run_pre_demo_steps(workflow_filename: str):
     if yaml_dict['input_settings']['upload_options']:
         for key in yaml_dict['input_settings']['upload_options']:
             try:
-                request['input_files'][key] = ['demo_path']
+                request['input_files'][key] = yaml_dict['input_settings']['upload_options'][key]['demo_path']
             except:
                 print(f"Demo path not set for input upload_option {key}. Will this cause issues?")
     else:
