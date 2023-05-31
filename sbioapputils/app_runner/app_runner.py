@@ -8,24 +8,30 @@ from sbioapputils.app_runner.app_runner_utils import AppRunnerUtils
 from sbioapputils.app_runner.workflow_utils import parse_workflow, set_defaults, set_numeric, create_directories, validate_request
 
 
-def _process_stage(stage_name, stage_value, config_subprocess_list):
-    logging.info(f'Stage {stage_name} starting')
+def _process_stage(stage_name, stage_value, config):
+    print(f'Stage {stage_name} starting')
     start_time = time.time()
-    sub_process_list = ['python', 'app/' + stage_value['file']] + config_subprocess_list
+    sub_process_list = ['python', 'app/' + stage_value['file']]
+    for key, value in config.items():
+        sub_process_list.append("--" + key)
+        sub_process_list.append(str(value))
+    for key, value in config['input_files'].items():
+        sub_process_list.append("--" + key)
+        sub_process_list.append(str(value))
     process = subprocess.Popen(sub_process_list, stdout=subprocess.PIPE)
     while True:
         line = process.stdout.readline()
         if not line:
             break
-        logging.info(line.rstrip())
+        print(line.rstrip())
 
     if process.returncode is not None:
-        logging.error(f"Error occurred in subprocess {stage_name}")
-        logging.error(process.returncode)
+        print(f"Error occurred in subprocess {stage_name}")
+        print(process.returncode)
         raise Exception(f"Error occurred in subprocess {stage_name}, with code {process.returncode}")
 
     end_time = time.time()
-    logging.info(f'Stage {stage_name} completed in {end_time - start_time} seconds')
+    print(f'Stage {stage_name} completed in {end_time - start_time} seconds')
 
 
 def _upload_results(job_id: str):
@@ -39,16 +45,6 @@ def _upload_results(job_id: str):
     for element in results_for_upload:
         AppRunnerUtils.upload_file(job_id, element)
     AppRunnerUtils.set_job_completed(job_id, results_for_payload)
-
-
-def _get_config_subprocess_list(config: dict):
-    config_subprocess_list = []
-    for key, value in config.items():
-        if not isinstance(value, dict):
-            config_subprocess_list.append(f' --{key} {value}')
-    for key, value in config['input_files'].items():
-        config_subprocess_list.append(f' --{key} {value}')
-    return config_subprocess_list
 
 
 def main():
@@ -71,9 +67,8 @@ def main():
         AppRunnerUtils.set_job_running(job_id)
         logging.info(f'Job {job_id} is running')
         
-        config_subprocess_list = _get_config_subprocess_list(request)
         for stage_name, stage_value in stages.items():
-            _process_stage(stage_name, stage_value, config_subprocess_list)
+            _process_stage(stage_name, stage_value, request)
         _upload_results(job_id)
         
     except Exception as e:
