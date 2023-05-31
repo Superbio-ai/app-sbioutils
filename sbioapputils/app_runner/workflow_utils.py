@@ -8,6 +8,7 @@ import shutil
 def parse_workflow(request):
     """Helper function to parse the workflow configuration."""
     workflow_loc = "app/workflow.yml"
+    print(request['workflow_name'])
     if request.get('workflow_name'):
         src_file = f"app/{request['workflow_name']}.yml"
         if (os.path.exists(workflow_loc)) and not (os.path.samefile(src_file, workflow_loc)):
@@ -22,6 +23,7 @@ def parse_workflow(request):
             
     stages = yaml_dict['stages']
     parameters = yaml_dict['parameters']
+    print(parameters)
     
     return stages, parameters
 
@@ -124,10 +126,9 @@ def parse_arguments():
         except yaml.YAMLError as exc:
             print(exc)
     import os
-    print(os.listdir('app/'))
-    print(yaml_dict)
     
     parameters = yaml_dict['parameters']
+    print(parameters)
     
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
@@ -150,5 +151,8 @@ def parse_arguments():
 
     # Parse the arguments
     args, unknown = parser.parse_known_args()
+    
+    if len(args)==0:
+        raise Exception("No arguments have been passed")
 
     return args
