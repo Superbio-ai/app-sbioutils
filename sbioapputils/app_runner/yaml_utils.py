@@ -399,7 +399,7 @@ def run_pre_demo_steps(workflow_filename: str):
     
     print("Generating demo configuration dictionary")
     request = {'job_id':'test'}
-    request['workflow_name'] = workflow_filename.split('.',0)
+    request['workflow_name'] = workflow_filename.split('.')[0]
         
     #set defaults where not present
     for key in yaml_dict['parameters'].keys():
