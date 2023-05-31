@@ -45,6 +45,8 @@ def _get_config_subprocess_list(config: dict):
     config_subprocess_list = []
     for key, value in config.items():
         config_subprocess_list.append(f'--{key} {value}')
+    for key, value in config['input_files'].items():
+        config_subprocess_list.append(f'--{key} {value}')
     return config_subprocess_list
 
 
