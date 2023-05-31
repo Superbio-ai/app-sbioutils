@@ -125,10 +125,8 @@ def parse_arguments():
             yaml_dict = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
-    import os
     
     parameters = yaml_dict['parameters']
-    print(parameters)
     
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
@@ -138,12 +136,15 @@ def parse_arguments():
         # If the parameter type is float, add a float argument to the parser
         if parameters[key]['type'] == 'float':
             parser.add_argument(f"--{key}", type=float)
+            print(f'{key} is float')
         # If the parameter type is int, add an integer argument to the parser
         elif parameters[key]['type'] == 'int':
             parser.add_argument(f"--{key}", type=int)
+            print(f'{key} is int')
         # Otherwise, add a string argument to the parser
         else:
             parser.add_argument(f"--{key}")
+            print(f'{key} is str')
     
     #loop over input files as well
     for key in yaml_dict['input_settings']['upload_options']:
@@ -151,6 +152,8 @@ def parse_arguments():
 
     # Parse the arguments
     args, unknown = parser.parse_known_args()
+    
+    print(len(unknown))
     
     if len(args)==0:
         raise Exception("No arguments have been passed")
