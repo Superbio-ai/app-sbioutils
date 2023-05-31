@@ -135,7 +135,7 @@ def parse_arguments():
     _, args = parser.parse_known_args()
     print(args)
 
-'''
+    '''
     # Loop over the parameters in the workflow configuration
     for key in parameters.keys():
         # If the parameter type is float, add a float argument to the parser
@@ -157,5 +157,5 @@ def parse_arguments():
     
     if len(args)==0:
         raise Exception("No arguments have been passed")
-'''
+    '''
     return args
