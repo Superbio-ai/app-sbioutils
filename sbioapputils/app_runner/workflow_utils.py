@@ -115,7 +115,6 @@ def validate_request(request, parameters):
 
 
 def parse_arguments():
-    '''
     # Load workflow configuration
     workflow_loc = "app/workflow.yml"
         
@@ -126,16 +125,10 @@ def parse_arguments():
             print(exc)
     
     parameters = yaml_dict['parameters']
-    '''
-    
+
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
 
-    #args = parser.parse_args()
-    _, args = parser.parse_known_args()
-    print(args)
-
-    '''
     # Loop over the parameters in the workflow configuration
     for key in parameters.keys():
         # If the parameter type is float, add a float argument to the parser
@@ -155,7 +148,4 @@ def parse_arguments():
     # Parse the arguments
     args, unknown = parser.parse_known_args()
     
-    if len(args)==0:
-        raise Exception("No arguments have been passed")
-    '''
     return args
