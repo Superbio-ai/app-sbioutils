@@ -123,10 +123,12 @@ def parse_arguments():
             yaml_dict = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
-            
+    import os
+    print(os.listdir('app/'))
+    print(yaml_dict)
+    
     parameters = yaml_dict['parameters']
     
-
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
 
