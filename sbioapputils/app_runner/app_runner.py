@@ -4,7 +4,6 @@ import traceback
 import time
 import sys
 import json
-
 from sbioapputils.app_runner.app_runner_utils import AppRunnerUtils
 from sbioapputils.app_runner.workflow_utils import parse_workflow, set_defaults, set_numeric, create_directories, validate_request
 

@@ -310,6 +310,7 @@ def _generate_carousel(output_settings_dict, result_type_key):
     
     
 def payload_from_config(yaml_dict):    
+    print("Generating payload from output config")
     results_for_payload = {}
     
     if yaml_dict['output_settings'].get('images'):
@@ -344,6 +345,7 @@ def _generate_file_dict(file_list):
     
 
 def payload_from_folder(folder_loc):
+    print("No payload config detected. Generating payload from output folder contents")
     # Based on contents of a given folder instead
     results_for_payload = {}
     folder_contents = os.listdir(folder_loc)
@@ -371,3 +373,62 @@ def payload_from_folder(folder_loc):
         results_for_payload['figures'] = _generate_file_dict(figures)
 
     return results_for_payload, additional_artifacts            
+
+
+def run_pre_demo_steps(workflow_filename: str):
+    workflow_loc = '/app/' + workflow_filename
+    yaml_dict = get_yaml(workflow_loc)
+    
+    print("Validating yaml stages")
+    valid_check = validate_yaml_stages(yaml_dict, style_check = True)
+    if not valid_check:
+        print("Stages have passed non-style checks")
+    else:
+        raise Exception("Yaml stage checks failed")
+    
+    print("Validating yaml parameters")
+    valid_check = validate_yaml_parameters(yaml_dict)
+    if not valid_check:
+        print("Parameters have passed checks")
+    else:
+        raise Exception("Yaml stage checks failed")
+    
+    print("Generating demo configuration dictionary")
+    request = {'job_id':'test'}
+        
+    #set defaults where not present
+    for key in yaml_dict['parameters'].keys():
+        # Check if default is present
+        if key not in request:
+            try:
+                request[key] = yaml_dict['parameters'][key]['default']
+            except:
+                print(f"Default not set for parameter {key}. Will this cause issues?")
+    
+    #set input files to the demo files
+    request['input_files']={}
+    if yaml_dict['input_settings']['upload_options']:
+        for key in yaml_dict['input_settings']['upload_options']:
+            try:
+                request['input_files'][key] = ['demo_path']
+            except:
+                print(f"Demo path not set for input upload_option {key}. Will this cause issues?")
+    else:
+        print("No input data settings detected. Is this correct?")
+    
+    return(request, yaml_dict['stages'], yaml_dict['parameters'])
+
+
+def run_post_demo_steps(workflow_filename: str):
+    workflow_loc = '/app/' + workflow_filename
+    yaml_dict = get_yaml(workflow_loc)
+    
+    print("Template for settingsConfig in UI:")
+    settingsConfig = define_settings_from_yaml(yaml_dict)
+    print(settingsConfig)
+    
+    print("Generating output payload:")
+    results_for_payload, results_for_upload = payload_from_yaml(yaml_dict)
+    print(results_for_payload)
+    print("Additional artifacts for upload:")
+    print(results_for_upload)
