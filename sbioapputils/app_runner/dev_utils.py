@@ -38,9 +38,7 @@ def validate_yaml_stages(yaml_dict, style_check = False):
     invalid_path = []
     code_errors = []
     
-    stages = []
     for key in yaml_dict['stages'].keys():
-        stages.append('/app' + yaml_dict['stages'][key]['file'])
         
         #catch common yaml formating errors and check target is a python file
         for subkey, value in yaml_dict['stages'][key].items():
@@ -66,12 +64,12 @@ def validate_yaml_stages(yaml_dict, style_check = False):
     if code_errors:
         valid_check = False
         print(f"Errors were found in these scripts: {code_errors}. Please check the printed messages to identify the errors")
-        
+    
     if style_check:
-        for stage in stages:
-            style_errors = _run_pycodestyle(stage)
+        for key in yaml_dict['stages'].keys():
+            style_errors = _run_pycodestyle('/app' + yaml_dict['stages'][key]['file'])
             if style_errors:
-                print(f"Style errors with file {stage}:")
+                print(f"Style errors with file {key}:")
                 print(style_errors)
             
     return valid_check
