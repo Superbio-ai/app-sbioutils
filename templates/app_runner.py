@@ -11,7 +11,7 @@ from sbioapputils.app_runner.dev_utils import get_yaml, payload_from_yaml
 
 
 def _process_stage(stage_name, stage_value, config):
-    print(f'Stage {stage_name} starting')
+    logging.info(f'Stage {stage_name} starting')
     start_time = time.time()
     sub_process_list = ['python', 'app/' + stage_value['file']]
     for key, value in config.items():
@@ -25,15 +25,15 @@ def _process_stage(stage_name, stage_value, config):
         line = process.stdout.readline()
         if not line:
             break
-        print(line.rstrip())
+        logging.info(line.rstrip())
 
     if process.returncode is not None:
-        print(f"Error occurred in subprocess {stage_name}")
-        print(process.returncode)
+        logging.info(f"Error occurred in subprocess {stage_name}")
+        logging.info(process.returncode)
         raise Exception(f"Error occurred in subprocess {stage_name}, with code {process.returncode}")
 
     end_time = time.time()
-    print(f'Stage {stage_name} completed in {end_time - start_time} seconds')
+    logging.info(f'Stage {stage_name} completed in {end_time - start_time} seconds')
 
 
 def _upload_results(job_id: str):
@@ -53,7 +53,7 @@ def _upload_results(job_id: str):
     for element in results_for_upload:
         AppRunnerUtils.upload_file(job_id, element)
     AppRunnerUtils.set_job_completed(job_id, results_for_payload)
-    
+
 
 def main():
     job_log_file = 'job.log'
