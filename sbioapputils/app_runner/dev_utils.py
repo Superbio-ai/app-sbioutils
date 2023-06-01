@@ -365,10 +365,16 @@ def payload_from_folder(folder_loc):
 
     if len(images) > 0:
         results_for_payload['images'] = _generate_file_dict(images)
+    else:
+        results_for_payload['images'] = {}
     if len(tables) > 0:
         results_for_payload['tables'] = _generate_file_dict(tables)
+    else:
+        results_for_payload['tables'] = {}
     if len(figures) > 0:
         results_for_payload['figures'] = _generate_file_dict(figures)
+    else:
+        results_for_payload['figures'] = {}
 
     return results_for_payload, additional_artifacts            
 
