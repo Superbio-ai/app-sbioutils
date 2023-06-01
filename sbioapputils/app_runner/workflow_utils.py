@@ -142,7 +142,7 @@ def parse_arguments():
             parser.add_argument(f"--{key}")
     
     #loop over input files as well
-    for key in yaml_dict['input_settings']['upload_options']:
+    for key in yaml_dict['input_settings']:
         parser.add_argument(f"--{key}", type=str)
 
     # Parse the arguments

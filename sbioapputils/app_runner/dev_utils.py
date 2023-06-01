@@ -118,32 +118,32 @@ def validate_yaml_parameters(yaml_dict):
 def _define_files_from_yaml(yaml_dict):
     
     input_files = []
-    if yaml_dict['input_settings'].get('upload_options'):
-        for key in yaml_dict['input_settings']['upload_options'].keys():
-            if yaml_dict['input_settings']['upload_options'][key]['type'] == 'table':
+    if yaml_dict.get('input_settings'):
+        for key in yaml_dict['input_settings'].keys():
+            if yaml_dict['input_settings'][key]['type'] == 'table':
                 input_element = csv_template.copy()
-            elif yaml_dict['input_settings']['upload_options'][key]['type'] == 'image':
+            elif yaml_dict['input_settings'][key]['type'] == 'image':
                 input_element = image_template.copy()
-            elif yaml_dict['input_settings']['upload_options'][key]['type'] == 'single_cell':
+            elif yaml_dict['input_settings'][key]['type'] == 'single_cell':
                 input_element = sc_template.copy()
             else:
-                print("No template is available for this data modality. Some parts of the uploadOptions configuration may need to be entered manually")
+                print("No template is available for this data modality. Some parts of the uploadOptions configuration may need to be specified manually")
                 input_element = default_template.copy()
-                if yaml_dict['input_settings'].get('data_structure'):
-                    input_element['dataStructure'] = yaml_dict['input_settings']['data_structure']
-                if yaml_dict['input_settings'].get('file_extensions'):
-                    input_element['allowedFormats']['fileExtensions'] = yaml_dict['input_settings']['file_extensions']
-                    strout = ' or '.join(map(str, yaml_dict['input_settings']['file_extensions']))
+                if yaml_dict['input_settings'][key].get('data_structure'):
+                    input_element['dataStructure'] = yaml_dict['input_settings'][key]['data_structure']
+                if yaml_dict['input_settings'][key].get('file_extensions'):
+                    input_element['allowedFormats']['fileExtensions'] = yaml_dict['input_settings'][key]['file_extensions']
+                    strout = ' or '.join(map(str, yaml_dict['input_settings'][key]['file_extensions']))
                     input_element['allowedFormats']['title'] = strout
 
             input_element['name'] = key
-            input_element['title'] = yaml_dict['input_settings']['upload_options'][key]['title']
-            if yaml_dict['input_settings']['upload_options'][key].get('demo_path'):
+            input_element['title'] = yaml_dict['input_settings'][key]['title']
+            if yaml_dict['input_settings'][key].get('demo_path'):
                 input_element['demoDataDetails'] = {
-                    'description':yaml_dict['input_settings']['upload_options'][key]['demo_description'],
-                    'filePath':yaml_dict['input_settings']['upload_options'][key]['demo_path'],
-                    'fileName':yaml_dict['input_settings']['upload_options'][key]['demo_path'].split('/')[-1],
-                    'fileSource':[{                        'title': 'Data Source',                        'url':yaml_dict['input_settings']['upload_options'][key]['url']}]
+                    'description':yaml_dict['input_settings'][key]['demo_description'],
+                    'filePath':yaml_dict['input_settings'][key]['demo_path'],
+                    'fileName':yaml_dict['input_settings'][key]['demo_path'].split('/')[-1],
+                    'fileSource':[{                        'title': 'Data Source',                        'url':yaml_dict['input_settings'][key]['url']}]
                     }
             input_files.append(input_element)
     return input_files
@@ -412,12 +412,12 @@ def run_pre_demo_steps(workflow_filename: str):
     
     #set input files to the demo files
     request['input_files']={}
-    if yaml_dict['input_settings']['upload_options']:
-        for key in yaml_dict['input_settings']['upload_options']:
+    if yaml_dict['input_settings']:
+        for key in yaml_dict['input_settings']:
             try:
-                request['input_files'][key] = yaml_dict['input_settings']['upload_options'][key]['demo_path']
+                request['input_files'][key] = yaml_dict['input_settings'][key]['demo_path']
             except:
-                print(f"Demo path not set for input upload_option {key}. Will this cause issues?")
+                print(f"Demo path not set for input input_setting {key}. Will this cause issues?")
     else:
         print("No input data settings detected. Is this correct?")
     
