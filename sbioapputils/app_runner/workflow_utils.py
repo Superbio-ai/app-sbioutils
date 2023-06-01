@@ -67,7 +67,7 @@ def create_directories(request, parameters):
     for key in parameters.keys():
             
         # Create directory if Path type
-        if (parameters[key]['type']==Path):
+        if (parameters[key]['type']=='path'):
             print(f"{key} is path")
             if not os.path.exists(request[key]):
                 os.mkdir(request[key])
