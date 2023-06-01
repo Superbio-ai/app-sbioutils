@@ -38,9 +38,9 @@ def set_numeric(request, parameters):
     
     #set numeric where required
     for key in parameters.keys():
-        if parameters[key]['type']==int:
+        if parameters[key]['type']=='int':
             request[key] = int(request[key])
-        elif parameters[key]['type']==float:
+        elif parameters[key]['type']=='float':
             request[key] = float(request[key])
         
     return(request)
@@ -67,7 +67,6 @@ def create_directories(request, parameters):
             
         # Create directory if Path type
         if (parameters[key]['type']=='path'):
-            print(f"{key} is path, creating directory")
             if not os.path.exists(request[key]):
                 os.mkdir(request[key])
 
