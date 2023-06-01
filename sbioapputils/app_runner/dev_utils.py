@@ -46,8 +46,10 @@ def validate_yaml_stages(yaml_dict, style_check = False):
         for subkey, value in yaml_dict['stages'][key].items():
             if ":" in subkey:
                 invalid_stage.append({key : subkey})
+                print(f"Stage {key} has an invalid yaml configuration")
         if not isPythonFile('/app' + yaml_dict['stages'][key]['file']):
             invalid_path.append(key)
+            print(f"Stage {key} has an invalid path")
     
         #checking for code errors in scripts
         defaultReporter = _makeDefaultReporter()
