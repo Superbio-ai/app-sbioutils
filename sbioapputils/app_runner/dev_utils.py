@@ -44,7 +44,7 @@ def validate_yaml_stages(yaml_dict, style_check = False):
         for subkey, value in yaml_dict['stages'][key].items():
             if ":" in subkey:
                 invalid_stage.append({key : subkey})
-                print(f"Stage {key} has an invalid yaml configuration")
+                print(f"Stage {key} has an invalid file parameter formatting: check there is a space between all keys and values")
         if not isPythonFile('/app' + yaml_dict['stages'][key]['file']):
             invalid_path.append(key)
             print(f"Stage {key} has an invalid path")
