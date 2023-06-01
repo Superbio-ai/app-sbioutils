@@ -1,7 +1,6 @@
 import argparse
 import os
 import yaml
-from pathlib import Path
 import shutil
 
 
@@ -68,11 +67,9 @@ def create_directories(request, parameters):
             
         # Create directory if Path type
         if (parameters[key]['type']=='path'):
-            print(f"{key} is path")
+            print(f"{key} is path, creating directory")
             if not os.path.exists(request[key]):
                 os.mkdir(request[key])
-        else:
-            print(f"{key} is NOT a path")
 
 
 def validate_request(request, parameters):
@@ -84,11 +81,11 @@ def validate_request(request, parameters):
     for key in parameters.keys():
         
         # Check if type is present
-        if not isinstance(request[key], eval(parameters[key]['type'])):
-            if eval(parameters[key]['type'])==Path:
-                if not request[key].startswith("/"):
-                    wrong_data_types.append(key)
-            else:
+        if parameters[key]['type'] in ['int', 'float', 'str']:
+            if not isinstance(request[key], eval(parameters[key]['type'])):
+                wrong_data_types.append(key)
+        if parameters[key]['type']=='path':
+            if not request[key].startswith("/"):
                 wrong_data_types.append(key)
 
         if parameters[key].get('user_defined') == 'True':
@@ -101,7 +98,7 @@ def validate_request(request, parameters):
                     if float(request[key]) < float(parameters[key]['min_value']):
                         invalid_value.append(key)
 
-            elif eval(parameters[key]['type']) == 'str':
+            elif parameters[key]['type'] == 'str':
                 dropdown = not parameters[key].get('from_data') == 'True'
                 # Category settings
                 if dropdown:
