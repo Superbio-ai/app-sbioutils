@@ -68,8 +68,11 @@ def create_directories(request, parameters):
             
         # Create directory if Path type
         if (parameters[key]['type']==Path):
+            print(f"{key} is path")
             if not os.path.exists(request[key]):
                 os.mkdir(request[key])
+        else:
+            print(f"{key} is NOT a path")
 
 
 def validate_request(request, parameters):
