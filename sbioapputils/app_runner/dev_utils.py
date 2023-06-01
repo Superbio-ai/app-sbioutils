@@ -260,15 +260,12 @@ def define_settings_from_yaml(yaml_dict):
     
     # Output parameters
     results_config = {
-        "description": "No description provided",
-        "saveModel": False
+        "description": "No description provided"
     }
     
     if yaml_dict.get('output_settings'):
         if yaml_dict['output_settings'].get('description'):
             results_config['description'] = yaml_dict['output_settings']['description']
-        if yaml_dict['output_settings'].get('save_model'):
-            results_config['saveModel'] = (yaml_dict['output_settings']['save_model'] == "True")
     
     app_settings = {
         "resultsConfig": results_config,
