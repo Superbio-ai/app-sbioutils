@@ -38,9 +38,9 @@ def set_numeric(request, parameters):
     
     #set numeric where required
     for key in parameters.keys():
-        if eval(parameters[key]['type'])==int:
+        if parameters[key]['type']==int:
             request[key] = int(request[key])
-        elif eval(parameters[key]['type'])==float:
+        elif parameters[key]['type']==float:
             request[key] = float(request[key])
         
     return(request)
