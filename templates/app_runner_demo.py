@@ -34,19 +34,6 @@ def _process_stage(stage_name, stage_value, config):
     end_time = time.time()
     print(f'Stage {stage_name} completed in {end_time - start_time} seconds')
 
-
-def _upload_results(job_id: str):
-    with open('results_for_payload.json', 'r') as f:
-        results_for_payload = json.load(f)
-    AppRunnerUtils.upload_results(job_id, results_for_payload)
-
-    # if any additional files/artifacts to be uploaded
-    with open('results_for_upload.json', 'r') as f:
-        results_for_upload = json.load(f)
-    for element in results_for_upload:
-        AppRunnerUtils.upload_file(job_id, element)
-    AppRunnerUtils.set_job_completed(job_id, results_for_payload)
-
         
 def main():
     workflow_filename = sys.argv[1]
