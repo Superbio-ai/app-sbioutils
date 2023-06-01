@@ -1,0 +1,56 @@
+name: CXR Test Project
+
+stages:
+    prepare: {file: 'prepare.py'}
+    embeddings: {file: 'embeddings.py'}
+    main: {file: 'main.py'}
+      
+input_settings:
+    label_path: {title: 'Labels and File/Image Names', type: 'table', demo_path: 'apps/cxr/resources/Tmetadata.csv', demo_description: 'Labels and filenames for Tuberculosis data', url: 'https://www.kaggle.com/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset'}
+    image: {title: 'Upload Chest X-ray Images (1000 images or 100mb max)', type: 'image', demo_path: 'apps/cxr/resources/TB_Images_200.zip', demo_description: 'Chest X-ray images for classification', url: 'https://www.kaggle.com/datasets/tawsifurrahman/tuberculosis-tb-chest-xray-dataset'}
+
+parameters:
+      job_id: {type: 'str'}
+      train_job_id: {type: 'str', default: None}
+      task: {type: 'str', default: 'training', options: ['training','inference','retraining']}
+      target: {type: 'str', default: 'Class', user_defined: 'True', from_data: 'True', tooltip: 'Target column for identifying labels'}
+      image_id: {type: 'str', default: 'image_id', user_defined: 'True', from_data: 'True', tooltip: 'Column for identifying file/ image names'}
+      label_path: {type: 'path', default: None}
+      image: {type: 'path'}
+      input_dir: {type: 'path', default: 'inputs/'}
+      embed_dir: {type: 'path', default: 'embeddings/'}
+      image_dir: {type: 'path', default: 'images/'}
+      limit: {type: 'int', default: 1000}
+      model_path: {type: 'str', default: None}
+      output_dir: {type: 'path', default: 'outputs/'}
+      test_ratio: {type: 'float', default: 0.2, user_defined: 'True', min_value: 0.05, max_value: 0.5, increment: 0.05}
+      batch_size: {type: 'int', default: 256}
+      pretune_epochs: {type: 'int', default: 50, user_defined: 'True', min_value: 5, max_value: 200, increment: 5, tooltip: 'Max number of epochs used to train trial models'}
+      pretune_trials: {type: 'int', default: 25, user_defined: 'True', min_value: 5, max_value: 50, increment: 1, tooltip: 'Number of trials to run, to identify optimal model, before training final model'}
+      tune_epochs: {type: 'int', default: 50, user_defined: 'True', min_value: 5, max_value: 200, increment: 5, tooltip: 'Max number of epochs used to train final models'}
+      patience: {type: 'int', default: 10}
+      num_folds: {type: 'int', default: 5, user_defined: 'True', min_value: 2, max_value: 10, increment: 1}
+      name: {type: 'str', default: 'CXR Test'}
+      case_name: {type: 'str', default: 'Case'}
+      control_name: {type: 'str', default: 'Control'}
+      to_ui: {type: 'str', default: 'True'}
+  
+output_settings:
+    folder: '/outputs/'
+    images:
+        carousel1:
+            i1: {file: 'outputs/roc_curve_training.png', title: 'Receiver Operating Characteristic (Training)'}
+        carousel2:
+            i2: {file: 'outputs/pr_curve_training.png', title: 'Precision-Recall Curve (Training)'}
+    tables:
+        carousel1:
+            t1: {file: 'outputs/confusion_training.csv', title: 'Confusion Matrix for Training Data'}
+        carousel2:
+            t2: {file: 'outputs/predictions_holdback.csv', title: 'Predictions (On Holdback Data)'}
+            t3: {file: 'outputs/predictions_training.csv', title: 'Fitted Values (On Training Data)'}
+        carousel3:
+            t4: {file: 'outputs/metrics_training.csv', title: 'Model Performance on Training Data'}
+    download:
+        d1: {file: 'outputs/predictions_holdback.csv', title: 'Predictions (On Holdback Data)'}
+    artifacts:
+        a1: {file: 'outputs/model.h5', title: 'Trained weights'}
