@@ -295,8 +295,8 @@ def payload_from_yaml(yaml_dict):
         results_for_payload, additional_artifacts = payload_from_folder(yaml_dict['output_settings']['folder'])
     else:
         results_for_payload, additional_artifacts = payload_from_config(yaml_dict)
-
-    return json.dumps(results_for_payload), additional_artifacts
+        
+    return results_for_payload, additional_artifacts
     
 
 def _generate_carousel(output_settings_dict, result_type_key):
