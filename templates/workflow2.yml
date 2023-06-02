@@ -36,7 +36,6 @@ parameters:
       to_ui: {type: 'str', default: 'True'}
   
 output_settings:
-    folder: '/outputs/'
     images:
         carousel1:
             i1: {file: 'outputs/roc_curve_training.png', title: 'Receiver Operating Characteristic (Training)'}

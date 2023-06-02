@@ -49,6 +49,8 @@ def _upload_results(job_id: str):
         results_for_payload, additional_artifacts = payload_from_yaml(yaml_dict)
         
     #upload results
+    logging.info('Payload:')
+    logging.info(results_for_payload)
     AppRunnerUtils.upload_results(job_id, results_for_payload)        
     for element in results_for_upload:
         AppRunnerUtils.upload_file(job_id, element)

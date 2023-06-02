@@ -6,7 +6,7 @@ from pyflakes.api import isPythonFile, checkPath
 from pyflakes.reporter import _makeDefaultReporter
 import pycodestyle
 import sys
-from credentials import get_credentials
+import dotenv
 
 
 def get_yaml(workflow_loc):
@@ -99,7 +99,10 @@ def validate_yaml_parameters(yaml_dict):
         for subkey in parameters[key].keys():
             if ":" in subkey:
                 bad_formating.append({key : subkey})
-                
+            elif parameters[key].get('default') and parameters[key].get('type'):
+                if (parameters[key]['type']=='path') and (parameters[key]['default'][-1]!='/'):
+                    bad_formating.append({key : subkey})
+                    
     if no_type:
         valid_check = False
         print('Some parameters do not have their datatype specified: {}'.format(no_type))
@@ -110,7 +113,7 @@ def validate_yaml_parameters(yaml_dict):
     
     if bad_formating:
         valid_check = False
-        print(f"These parameters are not formatted correctly in yaml: {bad_formating}. Please ensure no ':' values are included in keys and there is space between keys and values")
+        print(f"These parameters are not formatted correctly in yaml: {bad_formating}. Please ensure no ':' values are included in keys and there is space between keys and values. Also ensure that paths end with '/'")
         
     return valid_check
     
@@ -382,9 +385,6 @@ def payload_from_folder(folder_loc):
 def run_pre_demo_steps(workflow_filename: str):
     workflow_loc = '/app/' + workflow_filename
     yaml_dict = get_yaml(workflow_loc)
-    
-    print("Setting credentials")
-    get_credentials()
     
     print("Validating yaml stages")
     valid_check = validate_yaml_stages(yaml_dict, style_check = True)

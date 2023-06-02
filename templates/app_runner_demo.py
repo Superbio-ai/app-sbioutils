@@ -1,9 +1,7 @@
 import subprocess
 import time
 import sys
-import json
 from sbioapputils.app_runner.workflow_utils import create_directories, validate_request, parse_workflow
-from sbioapputils.app_runner.app_runner_utils import AppRunnerUtils
 
 #for demo / testing purposes:
 from sbioapputils.app_runner.dev_utils import run_pre_demo_steps, run_post_demo_steps
