@@ -427,7 +427,7 @@ def run_pre_demo_steps(workflow_filename: str):
     return(request, yaml_dict['stages'], yaml_dict['parameters'])
 
 
-def run_post_demo_steps(workflow_filename: str):
+def run_post_demo_steps(request: dict, workflow_filename: str):
     workflow_loc = '/app/' + workflow_filename
     yaml_dict = get_yaml(workflow_loc)
     
@@ -440,3 +440,11 @@ def run_post_demo_steps(workflow_filename: str):
     print(results_for_payload)
     print("Additional artifacts for upload:")
     print(results_for_upload)
+    
+    # printing folder contents to aid in showing locations of outputs
+    parameters = yaml_dict['parameters']
+    for key in parameters.keys():
+        if (parameters[key]['type']=='path'):
+            print(f'Contents of {key} directory after processing, with location {request[key]}:')
+            print(os.listdir(request[key]))
+            

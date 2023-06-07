@@ -53,7 +53,7 @@ def main():
         for stage_name, stage_value in stages.items():
             _process_stage(stage_name, stage_value, request)
             
-        run_post_demo_steps(workflow_filename)
+        run_post_demo_steps(request, workflow_filename)
         
     except Exception as e:
         err = str(e)
