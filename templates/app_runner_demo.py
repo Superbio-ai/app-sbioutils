@@ -5,6 +5,7 @@ from sbioapputils.app_runner.workflow_utils import create_directories, validate_
 
 #for demo / testing purposes:
 from sbioapputils.app_runner.dev_utils import run_pre_demo_steps, run_post_demo_steps
+import os
 
 
 def _process_stage(stage_name, stage_value, config):
@@ -33,9 +34,17 @@ def _process_stage(stage_name, stage_value, config):
     print(f'Stage {stage_name} completed in {end_time - start_time} seconds')
 
         
+def _set_environ():
+    with open("/app/.env") as file:
+        for item in file:
+            items = item.split('=')
+            if len(items)==2:
+                os.environ[items[0]] = items[1].strip('\n')
+                
+                
 def main():
     workflow_filename = sys.argv[1]
-    
+    _set_environ()
     try:
         #demo code
         request, stages, parameters =  run_pre_demo_steps(workflow_filename)

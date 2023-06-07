@@ -37,10 +37,10 @@ def set_numeric(request, parameters):
     """Request from FE, and parameters from workflow yaml"""
     
     #set numeric where required
-    for key in parameters.keys():
-        if parameters[key]['type']=='int':
+    for key, parameter in parameters.items():
+        if parameter['type'] == 'int':
             request[key] = int(request[key])
-        elif parameters[key]['type']=='float':
+        elif parameter['type'] == 'float':
             request[key] = float(request[key])
         
     return(request)
@@ -51,10 +51,10 @@ def set_defaults(request, parameters, job_id):
     request['job_id'] = job_id
     
     #set defaults where not present
-    for key in parameters.keys():
+    for key, parameter in parameters.items():
         # Check if default is present
         if key not in request:
-            request[key] = parameters[key]['default']
+            request[key] = parameter['default']
         
     return(request)
             
@@ -63,10 +63,10 @@ def create_directories(request, parameters):
     """Request from FE, and parameters from workflow yaml"""
     
     #set defaults where not present
-    for key in parameters.keys():
+    for key, parameter in parameters.items():
             
         # Create directory if Path type
-        if (parameters[key]['type']=='path'):
+        if (parameter['type']=='path'):
             if not os.path.exists(request[key]):
                 os.mkdir(request[key])
 
@@ -77,31 +77,31 @@ def validate_request(request, parameters):
     wrong_data_types = []
     invalid_value = []
 
-    for key in parameters.keys():
+    for key, parameter in parameters.items():
         
         # Check if type is present
-        if parameters[key]['type'] in ['int', 'float', 'str']:
-            if not isinstance(request[key], eval(parameters[key]['type'])):
+        if parameter['type'] in ['int', 'float', 'str']:
+            if not isinstance(request[key], eval(parameter['type'])):
                 wrong_data_types.append(key)
-        if parameters[key]['type']=='path':
+        if parameter['type']=='path':
             if not request[key].startswith("/"):
                 wrong_data_types.append(key)
 
-        if parameters[key].get('user_defined') == 'True':
-            if parameters[key]['type'] in ['int', 'float']:
+        if parameter.get('user_defined') == 'True':
+            if parameter['type'] in ['int', 'float']:
                 # Check between min and max
-                if parameters[key].get('max_value'):
-                    if float(request[key]) > float(parameters[key]['max_value']):
+                if parameter.get('max_value'):
+                    if float(request[key]) > float(parameter['max_value']):
                         invalid_value.append(key)
-                if parameters[key].get('min_value'):
-                    if float(request[key]) < float(parameters[key]['min_value']):
+                if parameter.get('min_value'):
+                    if float(request[key]) < float(parameter['min_value']):
                         invalid_value.append(key)
 
-            elif parameters[key]['type'] == 'str':
-                dropdown = not parameters[key].get('from_data') == 'True'
+            elif parameter['type'] == 'str':
+                dropdown = not parameter.get('from_data') == 'True'
                 # Category settings
                 if dropdown:
-                    if request[key] not in parameters[key]['options']:
+                    if request[key] not in parameter['options']:
                         invalid_value.append(key)
     output_errors = ""
     if wrong_data_types:
@@ -129,12 +129,12 @@ def parse_arguments():
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
 
     # Loop over the parameters in the workflow configuration
-    for key in parameters.keys():
+    for key, parameter in parameters.items():
         # If the parameter type is float, add a float argument to the parser
-        if parameters[key]['type'] == 'float':
+        if parameter['type'] == 'float':
             parser.add_argument(f"--{key}", type=float)
         # If the parameter type is int, add an integer argument to the parser
-        elif parameters[key]['type'] == 'int':
+        elif parameter['type'] == 'int':
             parser.add_argument(f"--{key}", type=int)
         # Otherwise, add a string argument to the parser
         else:

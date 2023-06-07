@@ -6,7 +6,6 @@ from pyflakes.api import isPythonFile, checkPath
 from pyflakes.reporter import _makeDefaultReporter
 import pycodestyle
 import sys
-import dotenv
 
 
 def get_yaml(workflow_loc):
@@ -31,29 +30,29 @@ def _run_pycodestyle(filename):
     return(errors)
             
 
-def validate_yaml_stages(yaml_dict, style_check = False):
+def validate_yaml_stages(yaml_dict: dict, style_check = False):
     """Validating parameters from workflow yaml"""    
     valid_check = True
     invalid_stage = []
     invalid_path = []
     code_errors = []
     
-    for key in yaml_dict['stages'].keys():
+    for key, stage in yaml_dict['stages'].items():
         
         #catch common yaml formating errors and check target is a python file
-        for subkey, value in yaml_dict['stages'][key].items():
+        for subkey in stage.keys():
             if ":" in subkey:
                 invalid_stage.append({key : subkey})
                 print(f"Stage {key} has an invalid file parameter formatting: check there is a space between all keys and values")
-        if not isPythonFile('/app' + yaml_dict['stages'][key]['file']):
+        if not isPythonFile('/app' + stage['file']):
             invalid_path.append(key)
             print(f"Stage {key} has an invalid path")
     
         #checking for code errors in scripts
         defaultReporter = _makeDefaultReporter()
-        error_flag = checkPath('/app' + yaml_dict['stages'][key]['file'], reporter = defaultReporter)
+        error_flag = checkPath('/app' + stage['file'], reporter = defaultReporter)
         if error_flag:
-            code_errors.append(value)
+            code_errors.append(stage)
     
     if invalid_stage:
         valid_check = False
@@ -66,8 +65,8 @@ def validate_yaml_stages(yaml_dict, style_check = False):
         print(f"Errors were found in these scripts: {code_errors}. Please check the printed messages to identify the errors")
     
     if style_check:
-        for key in yaml_dict['stages'].keys():
-            style_errors = _run_pycodestyle('/app' + yaml_dict['stages'][key]['file'])
+        for key, stage in yaml_dict['stages'].items():
+            style_errors = _run_pycodestyle('/app' + stage['file'])
             if style_errors:
                 print(f"Style errors with file {key}:")
                 print(style_errors)
@@ -75,7 +74,7 @@ def validate_yaml_stages(yaml_dict, style_check = False):
     return valid_check
             
             
-def validate_yaml_parameters(yaml_dict):
+def validate_yaml_parameters(yaml_dict: dict):
     """Validating parameters from workflow yaml"""
     # Check all required parameters are provided
     
@@ -122,31 +121,31 @@ def _define_files_from_yaml(yaml_dict):
     
     input_files = []
     if yaml_dict.get('input_settings'):
-        for key in yaml_dict['input_settings'].keys():
-            if yaml_dict['input_settings'][key]['type'] == 'table':
+        for key, input_values in yaml_dict['input_settings'].items():
+            if input_values['type'] == 'table':
                 input_element = csv_template.copy()
-            elif yaml_dict['input_settings'][key]['type'] == 'image':
+            elif input_values['type'] == 'image':
                 input_element = image_template.copy()
-            elif yaml_dict['input_settings'][key]['type'] == 'single_cell':
+            elif input_values['type'] == 'single_cell':
                 input_element = sc_template.copy()
             else:
                 print("No template is available for this data modality. Some parts of the uploadOptions configuration may need to be specified manually")
                 input_element = default_template.copy()
-                if yaml_dict['input_settings'][key].get('data_structure'):
-                    input_element['dataStructure'] = yaml_dict['input_settings'][key]['data_structure']
-                if yaml_dict['input_settings'][key].get('file_extensions'):
-                    input_element['allowedFormats']['fileExtensions'] = yaml_dict['input_settings'][key]['file_extensions']
-                    strout = ' or '.join(map(str, yaml_dict['input_settings'][key]['file_extensions']))
+                if input_values.get('data_structure'):
+                    input_element['dataStructure'] = input_values['data_structure']
+                if input_values.get('file_extensions'):
+                    input_element['allowedFormats']['fileExtensions'] = input_values['file_extensions']
+                    strout = ' or '.join(map(str, input_values['file_extensions']))
                     input_element['allowedFormats']['title'] = strout
 
             input_element['name'] = key
-            input_element['title'] = yaml_dict['input_settings'][key]['title']
-            if yaml_dict['input_settings'][key].get('demo_path'):
+            input_element['title'] = input_values['title']
+            if input_values.get('demo_path'):
                 input_element['demoDataDetails'] = {
-                    'description':yaml_dict['input_settings'][key]['demo_description'],
-                    'filePath':yaml_dict['input_settings'][key]['demo_path'],
-                    'fileName':yaml_dict['input_settings'][key]['demo_path'].split('/')[-1],
-                    'fileSource':[{                        'title': 'Data Source',                        'url':yaml_dict['input_settings'][key]['url']}]
+                    'description':input_values['demo_description'],
+                    'filePath':input_values['demo_path'],
+                    'fileName':input_values['demo_path'].split('/')[-1],
+                    'fileSource':[{                        'title': 'Data Source',                        'url':input_values['url']}]
                     }
             input_files.append(input_element)
     return input_files
@@ -366,19 +365,10 @@ def payload_from_folder(folder_loc):
         elif len(file.split('.')) > 1:
             additional_artifacts.append(folder_loc + file)
 
-    if len(images) > 0:
-        results_for_payload['images'] = _generate_file_dict(images)
-    else:
-        results_for_payload['images'] = {}
-    if len(tables) > 0:
-        results_for_payload['tables'] = _generate_file_dict(tables)
-    else:
-        results_for_payload['tables'] = {}
-    if len(figures) > 0:
-        results_for_payload['figures'] = _generate_file_dict(figures)
-    else:
-        results_for_payload['figures'] = {}
-
+    results_for_payload['images'] = _generate_file_dict(images)
+    results_for_payload['tables'] = _generate_file_dict(tables)
+    results_for_payload['figures'] = _generate_file_dict(figures)
+    
     return results_for_payload, additional_artifacts            
 
 
