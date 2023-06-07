@@ -30,29 +30,29 @@ def _run_pycodestyle(filename):
     return(errors)
             
 
-def validate_yaml_stages(yaml_dict, style_check = False):
-    """Validating parameters from workflow yaml"""
-    stages = yaml_dict['stages']
-    
+def validate_yaml_stages(yaml_dict: dict, style_check = False):
+    """Validating parameters from workflow yaml"""    
     valid_check = True
     invalid_stage = []
     invalid_path = []
     code_errors = []
     
-    for key in stages.keys():
-
+    for key, stage in yaml_dict['stages'].items():
+        
         #catch common yaml formating errors and check target is a python file
-        for subkey, value in stages[key].items():
+        for subkey in stage.keys():
             if ":" in subkey:
                 invalid_stage.append({key : subkey})
-            elif not isPythonFile(value):
-                invalid_path.append({key : subkey})
+                print(f"Stage {key} has an invalid file parameter formatting: check there is a space between all keys and values")
+        if not isPythonFile('/app' + stage['file']):
+            invalid_path.append(key)
+            print(f"Stage {key} has an invalid path")
     
         #checking for code errors in scripts
         defaultReporter = _makeDefaultReporter()
-        error_flag = checkPath(value, reporter = defaultReporter)
+        error_flag = checkPath('/app' + stage['file'], reporter = defaultReporter)
         if error_flag:
-            code_errors.append(value)
+            code_errors.append(stage)
     
     if invalid_stage:
         valid_check = False
@@ -63,18 +63,18 @@ def validate_yaml_stages(yaml_dict, style_check = False):
     if code_errors:
         valid_check = False
         print(f"Errors were found in these scripts: {code_errors}. Please check the printed messages to identify the errors")
-        
+    
     if style_check:
-        for key in stages.keys():
-            style_errors = _run_pycodestyle(stages[key]['file'])
+        for key, stage in yaml_dict['stages'].items():
+            style_errors = _run_pycodestyle('/app' + stage['file'])
             if style_errors:
-                print(f"Style errors with file {stages[key]['file']}:")
+                print(f"Style errors with file {key}:")
                 print(style_errors)
             
     return valid_check
             
             
-def validate_yaml_parameters(yaml_dict):
+def validate_yaml_parameters(yaml_dict: dict):
     """Validating parameters from workflow yaml"""
     # Check all required parameters are provided
     
@@ -98,7 +98,10 @@ def validate_yaml_parameters(yaml_dict):
         for subkey in parameters[key].keys():
             if ":" in subkey:
                 bad_formating.append({key : subkey})
-                
+            elif parameters[key].get('default') and parameters[key].get('type'):
+                if (parameters[key]['type']=='path') and (parameters[key]['default'][-1]!='/'):
+                    bad_formating.append({key : subkey})
+                    
     if no_type:
         valid_check = False
         print('Some parameters do not have their datatype specified: {}'.format(no_type))
@@ -109,7 +112,7 @@ def validate_yaml_parameters(yaml_dict):
     
     if bad_formating:
         valid_check = False
-        print(f"These parameters are not formatted correctly in yaml: {bad_formating}. Please ensure no ':' values are included in keys and there is space between keys and values")
+        print(f"These parameters are not formatted correctly in yaml: {bad_formating}. Please ensure no ':' values are included in keys and there is space between keys and values. Also ensure that paths end with '/'")
         
     return valid_check
     
@@ -117,32 +120,32 @@ def validate_yaml_parameters(yaml_dict):
 def _define_files_from_yaml(yaml_dict):
     
     input_files = []
-    if yaml_dict['input_settings'].get('upload_options'):
-        for key in yaml_dict['input_settings']['upload_options'].keys():
-            if yaml_dict['input_settings']['upload_options'][key]['type'] == 'table':
+    if yaml_dict.get('input_settings'):
+        for key, input_values in yaml_dict['input_settings'].items():
+            if input_values['type'] == 'table':
                 input_element = csv_template.copy()
-            elif yaml_dict['input_settings']['upload_options'][key]['type'] == 'image':
+            elif input_values['type'] == 'image':
                 input_element = image_template.copy()
-            elif yaml_dict['input_settings']['upload_options'][key]['type'] == 'single_cell':
+            elif input_values['type'] == 'single_cell':
                 input_element = sc_template.copy()
             else:
-                print("No template is available for this data modality. Some parts of the uploadOptions configuration may need to be entered manually")
+                print("No template is available for this data modality. Some parts of the uploadOptions configuration may need to be specified manually")
                 input_element = default_template.copy()
-                if yaml_dict['input_settings'].get('data_structure'):
-                    input_element['dataStructure'] = yaml_dict['input_settings']['data_structure']
-                if yaml_dict['input_settings'].get('file_extensions'):
-                    input_element['allowedFormats']['fileExtensions'] = yaml_dict['input_settings']['file_extensions']
-                    strout = ' or '.join(map(str, yaml_dict['input_settings']['file_extensions']))
+                if input_values.get('data_structure'):
+                    input_element['dataStructure'] = input_values['data_structure']
+                if input_values.get('file_extensions'):
+                    input_element['allowedFormats']['fileExtensions'] = input_values['file_extensions']
+                    strout = ' or '.join(map(str, input_values['file_extensions']))
                     input_element['allowedFormats']['title'] = strout
 
             input_element['name'] = key
-            input_element['title'] = yaml_dict['input_settings']['upload_options'][key]['title']
-            if yaml_dict['input_settings']['upload_options'][key].get('demo_path'):
+            input_element['title'] = input_values['title']
+            if input_values.get('demo_path'):
                 input_element['demoDataDetails'] = {
-                    'description':yaml_dict['input_settings']['upload_options'][key]['demo_description'],
-                    'filePath':yaml_dict['input_settings']['upload_options'][key]['demo_path'],
-                    'fileName':yaml_dict['input_settings']['upload_options'][key]['demo_path'].split('/')[-1],
-                    'fileSource':[{                        'title': 'Data Source',                        'url':yaml_dict['input_settings']['upload_options'][key]['url']}]
+                    'description':input_values['demo_description'],
+                    'filePath':input_values['demo_path'],
+                    'fileName':input_values['demo_path'].split('/')[-1],
+                    'fileSource':[{                        'title': 'Data Source',                        'url':input_values['url']}]
                     }
             input_files.append(input_element)
     return input_files
@@ -259,15 +262,12 @@ def define_settings_from_yaml(yaml_dict):
     
     # Output parameters
     results_config = {
-        "description": "No description provided",
-        "saveModel": False
+        "description": "No description provided"
     }
     
     if yaml_dict.get('output_settings'):
         if yaml_dict['output_settings'].get('description'):
             results_config['description'] = yaml_dict['output_settings']['description']
-        if yaml_dict['output_settings'].get('save_model'):
-            results_config['saveModel'] = (yaml_dict['output_settings']['save_model'] == "True")
     
     app_settings = {
         "resultsConfig": results_config,
@@ -294,8 +294,8 @@ def payload_from_yaml(yaml_dict):
         results_for_payload, additional_artifacts = payload_from_folder(yaml_dict['output_settings']['folder'])
     else:
         results_for_payload, additional_artifacts = payload_from_config(yaml_dict)
-
-    return json.dumps(results_for_payload), additional_artifacts
+        
+    return results_for_payload, additional_artifacts
     
 
 def _generate_carousel(output_settings_dict, result_type_key):
@@ -310,6 +310,7 @@ def _generate_carousel(output_settings_dict, result_type_key):
     
     
 def payload_from_config(yaml_dict):    
+    print("Generating payload from output config")
     results_for_payload = {}
     
     if yaml_dict['output_settings'].get('images'):
@@ -344,6 +345,7 @@ def _generate_file_dict(file_list):
     
 
 def payload_from_folder(folder_loc):
+    print("No payload config detected. Generating payload from output folder contents")
     # Based on contents of a given folder instead
     results_for_payload = {}
     folder_contents = os.listdir(folder_loc)
@@ -363,11 +365,76 @@ def payload_from_folder(folder_loc):
         elif len(file.split('.')) > 1:
             additional_artifacts.append(folder_loc + file)
 
-    if len(images) > 0:
-        results_for_payload['images'] = _generate_file_dict(images)
-    if len(tables) > 0:
-        results_for_payload['tables'] = _generate_file_dict(tables)
-    if len(figures) > 0:
-        results_for_payload['figures'] = _generate_file_dict(figures)
-
+    results_for_payload['images'] = _generate_file_dict(images)
+    results_for_payload['tables'] = _generate_file_dict(tables)
+    results_for_payload['figures'] = _generate_file_dict(figures)
+    
     return results_for_payload, additional_artifacts            
+
+
+def run_pre_demo_steps(workflow_filename: str):
+    workflow_loc = '/app/' + workflow_filename
+    yaml_dict = get_yaml(workflow_loc)
+    
+    print("Validating yaml stages")
+    valid_check = validate_yaml_stages(yaml_dict, style_check = True)
+    if valid_check:
+        print("Stages have passed non-style checks")
+    else:
+        raise Exception("yaml stage checks failed. See errors above")
+    
+    print("Validating yaml parameters")
+    valid_check = validate_yaml_parameters(yaml_dict)
+    if valid_check:
+        print("Parameters have passed checks")
+    else:
+        raise Exception("Yaml stage checks failed")
+    
+    print("Generating demo configuration dictionary")
+    request = {'job_id':'test'}
+    request['workflow_name'] = workflow_filename.split('.')[0]
+        
+    #set defaults where not present
+    for key in yaml_dict['parameters'].keys():
+        # Check if default is present
+        if key not in request:
+            try:
+                request[key] = yaml_dict['parameters'][key]['default']
+            except:
+                print(f"Default not set for parameter {key}. Will this cause issues?")
+    
+    #set input files to the demo files
+    request['input_files']={}
+    if yaml_dict['input_settings']:
+        for key in yaml_dict['input_settings']:
+            try:
+                request['input_files'][key] = yaml_dict['input_settings'][key]['demo_path']
+            except:
+                print(f"Demo path not set for input input_setting {key}. Will this cause issues?")
+    else:
+        print("No input data settings detected. Is this correct?")
+    
+    return(request, yaml_dict['stages'], yaml_dict['parameters'])
+
+
+def run_post_demo_steps(request: dict, workflow_filename: str):
+    workflow_loc = '/app/' + workflow_filename
+    yaml_dict = get_yaml(workflow_loc)
+    
+    print("Template for settingsConfig in UI:")
+    settingsConfig = define_settings_from_yaml(yaml_dict)
+    print(settingsConfig)
+    
+    print("Generating output payload:")
+    results_for_payload, results_for_upload = payload_from_yaml(yaml_dict)
+    print(results_for_payload)
+    print("Additional artifacts for upload:")
+    print(results_for_upload)
+    
+    # printing folder contents to aid in showing locations of outputs
+    parameters = yaml_dict['parameters']
+    for key in parameters.keys():
+        if (parameters[key]['type']=='path'):
+            print(f'Contents of {key} directory after processing, with location {request[key]}:')
+            print(os.listdir(request[key]))
+            

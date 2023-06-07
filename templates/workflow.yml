@@ -1,0 +1,25 @@
+name: SCVI_Stereoscope
+
+stages:
+    preprocess: {file: '/stereoscope/prepare_spatial.py'}
+    train: {file: '/stereoscope/train.py'}
+
+parameters:
+    task: {type: 'str', default: 'training'}
+    target: {name: 'Target (Labels)', type: 'str', default: 'cell_states', user_defined: 'True', from_data: 'True', tooltip: 'Choose variable representing the entity of interest (most commonly cell type)'}
+    top_n: {name: 'Filter Top N Genes', type: 'int', default: 6000, user_defined: 'True', min_value: 1000, max_value: 10000, increment: 100, tooltip: 'Filter to include only the top n genes by variability'}
+    sc_epochs: {name: 'Single Cell RNA Epochs', type: 'int', default: 100, user_defined: 'True', min_value: 20, max_value: 500, increment: 10, tooltip: 'Number of epochs to train single cell RNA variational autoencoder'}
+    st_epochs: {name: 'Spatial Transcriptomic Epochs', type: 'int', default: 2000, user_defined: 'True', min_value: 500, max_value: 5000, increment: 100, tooltip: 'Number of epochs to train spatial transcriptomic model'}
+    batch_effect: {name: 'Batch Effect Correction', type: 'str', default: None, user_defined: 'True', from_data: 'True', tooltip: 'Target column to control for batch effect'}
+    pretrained: {type: 'str', default: 'False'}
+    input_dir: {type: 'path', default: '/inputs'}
+    intermediate_dir: {type: 'path', default: '/intermediate'}
+    output_dir: {type: 'path', default: '/outputs'}
+    
+input_settings:
+    sc_path: {title: 'Single Cell RNA-Seq Data', description: 'Data should be in .h5ad format', type: 'single_cell', demo_path: 'apps/scvi_tools/resources/hca_heart_LV_stereoscope_subset_raw_ctl201217.h5ad', demo_description: 'Adult heart-cell atlas data from Litviňuková et al (2020)', url: 'https://ndownloader.figshare.com/files/26153564'}
+    st_path: {title: 'Visium Spatial Transcriptomic Data', description: 'Data should be have .h5ad file extension, and should follow 10x genomics file format', type: 'single_cell', demo_path: 'apps/scvi_tools/resources/filtered_feature_bc_matrix.h5', demo_description: 'Gene expression matrix from 10x Genomics', url: 'https://www.10xgenomics.com/resources/datasets?menu%5Bproducts.name%5D=Spatial%20Gene%20Expression&query=&page=1&configure%5Bfacets%5D%5B0%5D=chemistryVersionAndThroughput&configure%5Bfacets%5D%5B1%5D=pipeline.version&configure%5BhitsPerPage%5D=500&configure%5BmaxValuesPerFacet%5D=1000'}
+    tissue_path: {title: 'Tissue Position Matrix', description: 'Data should be in .csv, .txt or .tsv format. Gene names should be in first column, 3D location in 2nd-4th columns, and tissue values in 5th-6th columns.', type: 'table', demo_path: 'apps/scvi_tools/resources/tissue_positions_list.csv', demo_description: 'Tissue location matrix for 10x genomics dataset.', url: 'https://www.10xgenomics.com/resources/datasets?menu%5Bproducts.name%5D=Spatial%20Gene%20Expression&query=&page=1&configure%5Bfacets%5D%5B0%5D=chemistryVersionAndThroughput&configure%5Bfacets%5D%5B1%5D=pipeline.version&configure%5BhitsPerPage%5D=500&configure%5BmaxValuesPerFacet%5D=1000'}
+        
+output_settings:
+    folder: '/outputs/'

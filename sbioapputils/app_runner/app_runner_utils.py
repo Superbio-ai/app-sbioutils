@@ -4,6 +4,7 @@ import os
 import requests
 from logging.handlers import WatchedFileHandler
 
+
 class AppRunnerUtils:
 
     @classmethod

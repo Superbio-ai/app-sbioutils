@@ -1,15 +1,17 @@
 import argparse
 import os
 import yaml
-from pathlib import Path
+import shutil
 
 
 def parse_workflow(request):
     """Helper function to parse the workflow configuration."""
+    workflow_loc = "app/workflow.yml"
     if request.get('workflow_name'):
-        workflow_loc = f"app/{request['workflow_name']}.yml"
-    else:
-        workflow_loc = "app/workflow.yml"
+        src_file = f"app/{request['workflow_name']}.yml"
+        if (os.path.exists(workflow_loc)) and not (os.path.samefile(src_file, workflow_loc)):
+            os.remove(workflow_loc)
+        shutil.copy(src_file,workflow_loc)
         
     with open(workflow_loc, "r") as stream:
         try:
@@ -19,6 +21,7 @@ def parse_workflow(request):
             
     stages = yaml_dict['stages']
     parameters = yaml_dict['parameters']
+    
     return stages, parameters
 
 
@@ -30,15 +33,28 @@ def dir_path(string):
         raise NotADirectoryError(string)
 
 
+def set_numeric(request, parameters):
+    """Request from FE, and parameters from workflow yaml"""
+    
+    #set numeric where required
+    for key, parameter in parameters.items():
+        if parameter['type'] == 'int':
+            request[key] = int(request[key])
+        elif parameter['type'] == 'float':
+            request[key] = float(request[key])
+        
+    return(request)
+
+
 def set_defaults(request, parameters, job_id):
     """Request from FE, and parameters from workflow yaml"""
     request['job_id'] = job_id
     
     #set defaults where not present
-    for key in parameters.keys():
+    for key, parameter in parameters.items():
         # Check if default is present
         if key not in request:
-            request[key] = parameters[key]['default']
+            request[key] = parameter['default']
         
     return(request)
             
@@ -47,10 +63,10 @@ def create_directories(request, parameters):
     """Request from FE, and parameters from workflow yaml"""
     
     #set defaults where not present
-    for key in parameters.keys():
+    for key, parameter in parameters.items():
             
         # Create directory if Path type
-        if (str(request[key])[-1] == '/') and (parameters[key]['type']==Path):
+        if (parameter['type']=='path'):
             if not os.path.exists(request[key]):
                 os.mkdir(request[key])
 
@@ -61,27 +77,31 @@ def validate_request(request, parameters):
     wrong_data_types = []
     invalid_value = []
 
-    for key in parameters.keys():
+    for key, parameter in parameters.items():
         
         # Check if type is present
-        if not isinstance(request[key], parameters[key]['type']):
-            wrong_data_types.append(key)
+        if parameter['type'] in ['int', 'float', 'str']:
+            if not isinstance(request[key], eval(parameter['type'])):
+                wrong_data_types.append(key)
+        if parameter['type']=='path':
+            if not request[key].startswith("/"):
+                wrong_data_types.append(key)
 
-        if parameters[key].get('user_defined') == 'True':
-            if parameters[key]['type'] in ['int', 'float']:
+        if parameter.get('user_defined') == 'True':
+            if parameter['type'] in ['int', 'float']:
                 # Check between min and max
-                if parameters[key].get('max_value'):
-                    if request[key] > parameters[key]['max_value']:
+                if parameter.get('max_value'):
+                    if float(request[key]) > float(parameter['max_value']):
                         invalid_value.append(key)
-                if parameters[key].get('min_value'):
-                    if request[key] < parameters[key]['min_value']:
+                if parameter.get('min_value'):
+                    if float(request[key]) < float(parameter['min_value']):
                         invalid_value.append(key)
 
-            elif parameters[key]['type'] == 'str':
-                dropdown = not parameters[key].get('from_data') == 'True'
+            elif parameter['type'] == 'str':
+                dropdown = not parameter.get('from_data') == 'True'
                 # Category settings
                 if dropdown:
-                    if request[key] not in parameters[key]['options']:
+                    if request[key] not in parameter['options']:
                         invalid_value.append(key)
     output_errors = ""
     if wrong_data_types:
@@ -95,24 +115,36 @@ def validate_request(request, parameters):
 
 def parse_arguments():
     # Load workflow configuration
-    name, stages, parameters = parse_workflow()
+    workflow_loc = "app/workflow.yml"
+        
+    with open(workflow_loc, "r") as stream:
+        try:
+            yaml_dict = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    
+    parameters = yaml_dict['parameters']
 
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
 
     # Loop over the parameters in the workflow configuration
-    for key in parameters.keys():
+    for key, parameter in parameters.items():
         # If the parameter type is float, add a float argument to the parser
-        if parameters[key]['type'] == 'float':
+        if parameter['type'] == 'float':
             parser.add_argument(f"--{key}", type=float)
         # If the parameter type is int, add an integer argument to the parser
-        elif parameters[key]['type'] == 'int':
+        elif parameter['type'] == 'int':
             parser.add_argument(f"--{key}", type=int)
         # Otherwise, add a string argument to the parser
         else:
             parser.add_argument(f"--{key}")
+    
+    #loop over input files as well
+    for key in yaml_dict['input_settings']:
+        parser.add_argument(f"--{key}", type=str)
 
     # Parse the arguments
     args, unknown = parser.parse_known_args()
-
+    
     return args
