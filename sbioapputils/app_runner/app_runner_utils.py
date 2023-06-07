@@ -3,7 +3,7 @@ import logging
 import os
 import requests
 from logging.handlers import WatchedFileHandler
-import dotenv
+
 
 class AppRunnerUtils:
 
