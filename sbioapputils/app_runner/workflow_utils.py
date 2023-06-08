@@ -55,6 +55,9 @@ def set_defaults(request, parameters, job_id):
         # Check if default is present
         if key not in request:
             request[key] = parameter['default']
+        #convert 'None' to None
+        if request[key] == 'None':
+            request[key] = None
         
     return(request)
             
@@ -146,5 +149,6 @@ def parse_arguments():
 
     # Parse the arguments
     args, unknown = parser.parse_known_args()
+    args.workflow_name = parameters['workflow_name']
     
     return args
