@@ -49,6 +49,7 @@ def main():
         #demo code
         request, stages, parameters =  run_pre_demo_steps(workflow_filename)
         _, _ = parse_workflow(request)
+        request['workflow_filename'] = workflow_filename
         print(f'Demo config has been parsed: {request}')
         
         create_directories(request, parameters)        

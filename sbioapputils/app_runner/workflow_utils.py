@@ -58,7 +58,9 @@ def set_defaults(request, parameters, job_id):
         #convert 'None' to None
         if request[key] == 'None':
             request[key] = None
-        
+            
+    request['workflow_name'] = parameters
+    
     return(request)
             
 
@@ -131,6 +133,7 @@ def parse_arguments():
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
 
+    parameters['workflow_name'] = 'workflow.yml'
     # Loop over the parameters in the workflow configuration
     for key, parameter in parameters.items():
         # If the parameter type is float, add a float argument to the parser
@@ -149,6 +152,5 @@ def parse_arguments():
 
     # Parse the arguments
     args, unknown = parser.parse_known_args()
-    args.workflow_name = parameters['workflow_name']
     
     return args
