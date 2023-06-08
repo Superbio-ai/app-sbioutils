@@ -211,7 +211,7 @@ def _define_from_string(para_dict, key, input_parameters, inputs_require_files):
     return(input_parameters, inputs_require_files)
     
 
-def define_settings_from_yaml(yaml_dict):
+def define_settings_from_yaml(yaml_dict, workflow_filename):
     '''
     _define_files_from_yaml is a helper function that returns a list of input file elements based on the information in the YAML file. Each input file element is a dictionary that specifies the properties of an input file that can be uploaded to the web application. The function checks the type of the input file (table, image, or single cell) and uses a corresponding template from the templates module to set the default values for the file properties.
 
@@ -250,6 +250,17 @@ def define_settings_from_yaml(yaml_dict):
  
     input_files = _define_files_from_yaml(yaml_dict)
     
+    #including workflow name
+    input_parameters.append({
+           "default_value": workflow_filename,
+           "hidden": True,
+           "input_type": "user_input",
+           "name": "workflow_name",
+           "title": "workflow_name",
+           "tooltip": "workflow_name",
+           "type": "text"
+        })
+    
     settings_config = {
         "disabledFields": inputs_require_files,
         "inputsRequireFiles": inputs_require_files,
@@ -273,7 +284,7 @@ def define_settings_from_yaml(yaml_dict):
         "resultsConfig": results_config,
         "settingsConfig": settings_config
     }
-    
+            
     return json.dumps(app_settings)
 
 
@@ -395,11 +406,11 @@ def run_pre_demo_steps(workflow_filename: str):
     request['workflow_name'] = workflow_filename.split('.')[0]
         
     #set defaults where not present
-    for key in yaml_dict['parameters'].keys():
+    for key, value in yaml_dict['parameters'].items():
         # Check if default is present
         if key not in request:
             try:
-                request[key] = yaml_dict['parameters'][key]['default']
+                request[key] = value['default']
             except:
                 print(f"Default not set for parameter {key}. Will this cause issues?")
     
@@ -422,7 +433,7 @@ def run_post_demo_steps(request: dict, workflow_filename: str):
     yaml_dict = get_yaml(workflow_loc)
     
     print("Template for settingsConfig in UI:")
-    settingsConfig = define_settings_from_yaml(yaml_dict)
+    settingsConfig = define_settings_from_yaml(yaml_dict, workflow_filename)
     print(settingsConfig)
     
     print("Generating output payload:")
