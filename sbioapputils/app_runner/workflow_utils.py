@@ -133,7 +133,8 @@ def parse_arguments():
     # Create an argument parser
     parser = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
 
-    parameters['workflow_name'] = 'workflow.yml'
+    parameters['workflow_name'] = {'default':'workflow.yml', 'type':'str'}
+    
     # Loop over the parameters in the workflow configuration
     for key, parameter in parameters.items():
         # If the parameter type is float, add a float argument to the parser
