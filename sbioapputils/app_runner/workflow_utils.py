@@ -54,8 +54,6 @@ def set_defaults(request, parameters, job_id):
     for key, parameter in parameters.items():
         # Check if default is present
         if key not in request:
-            print(key)
-            print(parameter['default'])
             request[key] = parameter['default']
         #convert 'None' to None
         if request[key] == 'None':
@@ -88,7 +86,7 @@ def validate_request(request, parameters):
         
         # Check if type is present
         if parameter['type'] in ['int', 'float', 'str']:
-            if (not isinstance(request[key], eval(parameter['type']))) and (not None):
+            if (not isinstance(request[key], eval(parameter['type']))) and (request[key] != None):
                 wrong_data_types.append(key)
         if parameter['type']=='path':
             if not request[key].startswith("/"):
