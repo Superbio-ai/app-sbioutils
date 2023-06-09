@@ -305,6 +305,20 @@ def payload_from_yaml(yaml_dict):
         results_for_payload, additional_artifacts = payload_from_folder(yaml_dict['output_settings']['folder'])
     else:
         results_for_payload, additional_artifacts = payload_from_config(yaml_dict)
+    
+    #removing empty keys, as otherwise an error in FE
+    remove=[]
+    for key, results in yaml_dict.items():
+        if key != 'download':
+            contents=0
+            for car_contents in results:
+                contents+=len(car_contents)
+        else:
+            contents =len(results)
+        if contents==0:
+            remove.append(key)
+    for key in remove:
+        del yaml_dict[key]
         
     return results_for_payload, additional_artifacts
     
