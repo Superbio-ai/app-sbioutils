@@ -313,9 +313,12 @@ def _generate_carousel(output_settings_dict, result_type_key):
     full_files = []
     for carousel in output_settings_dict[result_type_key].keys():
         carousel_files = []
-        for output_file in output_settings_dict[result_type_key][carousel].keys():
-            carousel_files.append({'file': output_settings_dict[result_type_key][carousel][output_file]['file'],
-                                    'title': output_settings_dict[result_type_key][carousel][output_file]['title']})
+        for output_key, output_value in output_settings_dict[result_type_key][carousel].items():
+            file = output_value['file']
+            if file[0]=='/':
+                file = file[1:] 
+            carousel_files.append({'file': file,
+                                    'title': output_value['title']})
         full_files.append(carousel_files)
     return full_files
     
@@ -351,6 +354,8 @@ def payload_from_config(yaml_dict):
 def _generate_file_dict(file_list):
     full_files = []
     for file in file_list:
+        if file[0]=='/':
+            file = file[1:]
         full_files.append({'file': file, 'title': file.split('/')[-1].split('.')[0]})
     return full_files
     
