@@ -376,9 +376,9 @@ def payload_from_folder(folder_loc):
         elif len(file.split('.')) > 1:
             additional_artifacts.append(folder_loc + file)
 
-    results_for_payload['images'] = _generate_file_dict(images)
-    results_for_payload['tables'] = _generate_file_dict(tables)
-    results_for_payload['figures'] = _generate_file_dict(figures)
+    results_for_payload['images'] = [_generate_file_dict(images)]
+    results_for_payload['tables'] = [_generate_file_dict(tables)]
+    results_for_payload['figures'] = [_generate_file_dict(figures)]
     
     return results_for_payload, additional_artifacts            
 
