@@ -345,8 +345,8 @@ def payload_from_config(yaml_dict):
         
     additional_artifacts = []
     if yaml_dict['output_settings'].get('artifacts'):
-        for output_file in yaml_dict['output_settings']['artifacts'].keys():
-            additional_artifacts.append(yaml_dict['output_settings']['artifacts'][output_file]['file'])
+        for output_file, output_value in yaml_dict['output_settings']['artifacts'].items():
+            additional_artifacts.append(output_value['file'])        
         
     return results_for_payload, additional_artifacts
 
@@ -379,7 +379,11 @@ def payload_from_folder(folder_loc):
         elif file_ext in ['html']:
             figures.append(folder_loc + file)
         elif len(file.split('.')) > 1:
-            additional_artifacts.append(folder_loc + file)
+            if os.path.isdir(file):
+                for sub_element in os.listdir(file):
+                    additional_artifacts.append(folder_loc + file + '/' + sub_element)
+            else:
+                additional_artifacts.append(folder_loc + file)
 
     results_for_payload['images'] = [_generate_file_dict(images)]
     results_for_payload['tables'] = [_generate_file_dict(tables)]
