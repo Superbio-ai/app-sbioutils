@@ -317,7 +317,9 @@ def payload_from_yaml(yaml_dict):
             contents =len(results)
         if contents==0:
             remove.append(key)
+    
     for key in remove:
+        print(f"No {key} found, so removing from payload")
         del yaml_dict[key]
         
     return results_for_payload, additional_artifacts

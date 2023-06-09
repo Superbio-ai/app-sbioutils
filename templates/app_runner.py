@@ -53,7 +53,10 @@ def _upload_results(job_id: str):
     #upload results
     logging.info('Payload:')
     logging.info(results_for_payload)
-    AppRunnerUtils.upload_results(job_id, results_for_payload)        
+
+    AppRunnerUtils.upload_results(job_id, results_for_payload)
+    logging.info('Additional artifacts:')
+    logging.info(additional_artifacts)
     for element in additional_artifacts:
         AppRunnerUtils.upload_file(job_id, element)
     AppRunnerUtils.set_job_completed(job_id, results_for_payload)
