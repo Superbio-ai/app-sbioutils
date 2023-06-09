@@ -58,8 +58,6 @@ def set_defaults(request, parameters, job_id):
         #convert 'None' to None
         if request[key] == 'None':
             request[key] = None
-            
-    request['workflow_name'] = parameters
     
     return(request)
             
