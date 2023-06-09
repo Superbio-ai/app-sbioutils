@@ -6,7 +6,7 @@ import sys
 import json
 from os.path import exists
 from sbioapputils.app_runner.app_runner_utils import AppRunnerUtils
-from sbioapputils.app_runner.workflow_utils import parse_workflow, set_defaults, set_numeric, create_directories, validate_request
+from sbioapputils.app_runner.workflow_utils import parse_workflow, set_defaults, set_numeric, create_directories, validate_request, remove_empty_keys
 from sbioapputils.app_runner.dev_utils import get_yaml, payload_from_yaml
 
 
@@ -49,7 +49,8 @@ def _upload_results(job_id: str):
         logging.info("Generating payload from yaml file")
         yaml_dict = get_yaml('/app/workflow.yml')
         results_for_payload, additional_artifacts = payload_from_yaml(yaml_dict)
-        
+    results_for_payload = remove_empty_keys(results_for_payload)
+    
     #upload results
     logging.info('Payload:')
     logging.info(results_for_payload)

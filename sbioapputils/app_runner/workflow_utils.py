@@ -153,3 +153,24 @@ def parse_arguments():
     args, unknown = parser.parse_known_args()
     
     return args
+
+
+def remove_empty_keys(yaml_dict):
+
+    #removing empty keys, as otherwise an error in FE
+    remove=[]
+    for key, results in yaml_dict.items():
+        if key != 'download':
+            contents=0
+            for car_contents in results:
+                contents+=len(car_contents)
+        else:
+            contents =len(results)
+        if contents==0:
+            remove.append(key)
+    
+    for key in remove:
+        print(f"No {key} found, so removing from payload")
+        del yaml_dict[key]
+    
+    return(yaml_dict)        
