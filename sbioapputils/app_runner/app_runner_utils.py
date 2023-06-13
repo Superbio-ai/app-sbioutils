@@ -57,6 +57,7 @@ class AppRunnerUtils:
     @classmethod
     def upload_file(cls, job_id: str, src_file: str):
         dest = cls.get_job_folder(job_id)
+        dest = dest.replace("//","/")
         bucket = cls.get_s3_bucket()
         cls._upload(bucket, src_file, dest)
 
