@@ -72,7 +72,7 @@ def main():
         stages, parameters = parse_workflow(request)
         request = set_defaults(request, parameters, job_id)
         request = set_numeric(request, parameters)
-        create_directories(request, parameters)
+        request = create_directories(request, parameters)
         logging.info('Workflow parsed')
         logging.info(f'Job config: {request}')
         
