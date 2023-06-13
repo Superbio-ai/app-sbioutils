@@ -70,9 +70,11 @@ def create_directories(request, parameters):
             
         # Create directory if Path type
         if (parameter['type']=='path'):
+            request[key] = request[key].replace("//","/")
             if not os.path.exists(request[key]):
                 os.mkdir(request[key])
-
+    return(request)
+        
 
 def validate_request(request, parameters):
     """Validating request against workflow yaml"""
@@ -115,7 +117,7 @@ def validate_request(request, parameters):
         
     return output_errors
 
-
+        
 def parse_arguments():
     # Load workflow configuration
     workflow_loc = "app/workflow.yml"
