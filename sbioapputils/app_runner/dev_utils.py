@@ -84,22 +84,22 @@ def validate_yaml_parameters(yaml_dict: dict):
     no_type = []
     bad_formating = []
     
-    for key in parameters.keys():
+    for key, parameter in parameters.items():
 
         # Check if default is present
-        if not parameters[key].get('default'):
+        if 'default' not in parameter:
             no_default.append(key)
 
         # Check if type is present
-        if not parameters[key].get('type'):
+        if not parameter.get('type'):
             no_type.append(key)
         
         #catch common yaml formating errors
-        for subkey in parameters[key].keys():
+        for subkey in parameter.keys():
             if ":" in subkey:
                 bad_formating.append({key : subkey})
-            elif parameters[key].get('default') and parameters[key].get('type'):
-                if (parameters[key]['type']=='path') and (parameters[key]['default'][-1]!='/'):
+            elif ('default' in parameter) and (parameter.get('type')):
+                if (parameter['type']=='path') and (parameter['default'][-1]!='/'):
                     bad_formating.append({key : subkey})
                     
     if no_type:
