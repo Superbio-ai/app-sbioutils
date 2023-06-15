@@ -9,8 +9,7 @@ def parse_workflow(request):
     workflow_loc = "app/workflow.yml"
     if request.get('workflow_name'):
         src_file = f"app/{request['workflow_name']}.yml"
-        if (os.path.exists(workflow_loc)) and not (os.path.samefile(src_file, workflow_loc)):
-            os.remove(workflow_loc)
+        if src_file!=workflow_loc:
             shutil.copy(src_file,workflow_loc)
         
     with open(workflow_loc, "r") as stream:
