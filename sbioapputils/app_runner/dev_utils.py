@@ -166,7 +166,7 @@ def run_post_demo_steps(request: dict, workflow_filename: str):
     
     else:
         print("Generating output payload from yaml (custom json not found)")
-        results_for_payload, results_for_upload = payload_from_yaml(yaml_dict)
+        results_for_payload, results_for_upload = payload_from_yaml(workflow_loc)
     print(results_for_payload)
     print("Additional artifacts for upload:")
     print(results_for_upload)
