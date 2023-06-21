@@ -1,7 +1,19 @@
 import json
 import os
+import yaml
 from .templates import csv_template, image_template, sc_template, default_template
-from .dev_utils import get_yaml
+
+
+def get_yaml(workflow_loc):
+    """Helper function to parse the workflow configuration."""    
+    with open(workflow_loc, "r") as stream:
+        try:
+            yaml_dict = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+            
+    return yaml_dict
+
 
 def _define_files_from_yaml(yaml_dict):
     

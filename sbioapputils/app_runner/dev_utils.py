@@ -5,19 +5,8 @@ from pyflakes.api import isPythonFile, checkPath
 from pyflakes.reporter import _makeDefaultReporter
 import pycodestyle
 import sys
-from .yaml_utils import payload_from_yaml
+from .yaml_utils import payload_from_yaml, get_yaml
 import json
-
-
-def get_yaml(workflow_loc):
-    """Helper function to parse the workflow configuration."""    
-    with open(workflow_loc, "r") as stream:
-        try:
-            yaml_dict = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
-            
-    return yaml_dict
 
 
 def _run_pycodestyle(filename):
