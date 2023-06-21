@@ -11,13 +11,13 @@ def parse_workflow(request):
         src_file = f"app/{request['workflow_name']}.yml"
         if src_file!=workflow_loc:
             shutil.copy(src_file,workflow_loc)
-        
+            print(f"Workflow moved from app/{request['workflow_name']}.yml to app/workflow.yml")
     with open(workflow_loc, "r") as stream:
         try:
             yaml_dict = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
-            
+
     stages = yaml_dict['stages']
     parameters = yaml_dict['parameters']
     

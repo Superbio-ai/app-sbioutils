@@ -120,6 +120,7 @@ def validate_yaml_parameters(yaml_dict: dict):
     
 def run_pre_demo_steps(workflow_filename: str):
     workflow_loc = '/app/' + workflow_filename
+    print(f"Expected workflow location: {workflow_loc}")
     yaml_dict = get_yaml(workflow_loc)
     
     print("Validating yaml stages")
