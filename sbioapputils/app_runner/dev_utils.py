@@ -302,7 +302,7 @@ def payload_from_yaml(yaml_dict):
     """
     
     if yaml_dict['output_settings'].get('folder'):
-        results_for_payload, additional_artifacts = payload_from_folder(yaml_dict['output_settings']['folder'])
+        results_for_payload, additional_artifacts = payload_from_folder(yaml_dict['output_settings']['folder'], yaml_dict)
     else:
         results_for_payload, additional_artifacts = payload_from_config(yaml_dict)
     
@@ -360,7 +360,7 @@ def _generate_file_dict(file_list):
     return full_files
     
 
-def payload_from_folder(folder_loc):
+def payload_from_folder(folder_loc, yaml_dict):
     print("No payload config detected. Generating payload from output folder contents")
     # Based on contents of a given folder instead
     results_for_payload = {}
@@ -384,10 +384,29 @@ def payload_from_folder(folder_loc):
                     additional_artifacts.append(folder_loc + file + '/' + sub_element)
             else:
                 additional_artifacts.append(folder_loc + file)
-
-    results_for_payload['images'] = [_generate_file_dict(images)]
-    results_for_payload['tables'] = [_generate_file_dict(tables)]
-    results_for_payload['figures'] = [_generate_file_dict(figures)]
+    
+    #override get from folder if config provided in yaml
+    if yaml_dict['output_settings'].get('images'):
+        results_for_payload['images'] = _generate_carousel(output_settings_dict=yaml_dict['output_settings'], result_type_key='images')
+    else:
+        results_for_payload['images'] = [_generate_file_dict(images)]
+        
+    if yaml_dict['output_settings'].get('figures'):
+        results_for_payload['figures'] = _generate_carousel(output_settings_dict=yaml_dict['output_settings'], result_type_key='figures')
+    else:
+        results_for_payload['figures'] = [_generate_file_dict(figures)]
+        
+    if yaml_dict['output_settings'].get('tables'):
+        results_for_payload['tables'] = _generate_carousel(output_settings_dict=yaml_dict['output_settings'], result_type_key='tables')
+    else:
+        results_for_payload['tables'] = [_generate_file_dict(tables)]
+        
+    if yaml_dict['output_settings'].get('download'):
+        full_files = []
+        for output_file in yaml_dict['output_settings']['download'].keys():
+            full_files.append({'file': yaml_dict['output_settings']['download'][output_file]['file'],
+                                 'title': yaml_dict['output_settings']['download'][output_file]['title']})
+        results_for_payload['download'] = full_files
     
     return results_for_payload, additional_artifacts            
 
