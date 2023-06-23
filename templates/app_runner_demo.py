@@ -66,6 +66,8 @@ def main():
             _process_stage(stage_name, stage_value, request)
             
         run_post_demo_steps(request, workflow_filename)
+        print("Demo completed")
+        
         
     except Exception as e:
         err = str(e)

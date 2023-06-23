@@ -54,14 +54,15 @@ def set_defaults(request, parameters, job_id):
         # Check if default is present
         if key not in request:
             request[key] = parameter['default']
+        
+        #convert 'None' to None
+        if request[key] == 'None':
+            request[key] = None
+        #convert to numeric
         elif parameter['type']=='int':
             request[key] = int(request[key])
         elif parameter['type']=='float':
             request[key] = float(request[key])
-                    
-        #convert 'None' to None
-        if request[key] == 'None':
-            request[key] = None
     
     return(request)
             
