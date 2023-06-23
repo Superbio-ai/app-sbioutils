@@ -126,29 +126,35 @@ def run_pre_demo_steps(workflow_filename: str):
     else:
         raise Exception("Yaml stage checks failed")
     
-    print("Generating demo configuration dictionary")
-    request = {'job_id':'test'}
-    request['workflow_name'] = workflow_filename.split('.')[0]
-        
-    #set defaults where not present
-    for key, value in yaml_dict['parameters'].items():
-        # Check if default is present
-        if key not in request:
-            try:
-                request[key] = value['default']
-            except:
-                print(f"Default not set for parameter {key}. Will this cause issues?")
-    
-    #set input files to the demo files
-    request['input_files']={}
-    if yaml_dict['input_settings']:
-        for key in yaml_dict['input_settings']:
-            try:
-                request['input_files'][key] = yaml_dict['input_settings'][key]['demo_path']
-            except:
-                print(f"Demo path not set for input input_setting {key}. Will this cause issues?")
+    if "JOB_CONFIG" in os.environ:
+        print("Generating configuration dictionary from JOB_CONFIG")
+        request =  eval(os.environ.get("JOB_CONFIG"))
+        request['job_id'] = os.environ.get("JOB_ID")
     else:
-        print("No input data settings detected. Is this correct?")
+        print("Generating configuration dictionary from defaults specified in yaml")
+        request = {'job_id':'test'}
+        
+        #set defaults where not present
+        for key, value in yaml_dict['parameters'].items():
+            # Check if default is present
+            if key not in request:
+                try:
+                    request[key] = value['default']
+                except:
+                    print(f"Default not set for parameter {key}. Will this cause issues?")
+        
+        #set input files to the demo files
+        request['input_files']={}
+        if yaml_dict['input_settings']:
+            for key in yaml_dict['input_settings']:
+                try:
+                    request['input_files'][key] = yaml_dict['input_settings'][key]['demo_path']
+                except:
+                    print(f"Demo path not set for input input_setting {key}. Will this cause issues?")
+        else:
+            print("No input data settings detected. Is this correct?")
+
+    request['workflow_name'] = workflow_filename.split('.')[0]
     
     return(request, yaml_dict['stages'], yaml_dict['parameters'])
 
