@@ -189,7 +189,7 @@ def define_settings_from_yaml(workflow_loc):
     return json.dumps(app_settings)
 
 
-def payload_from_yaml(workflow_loc):
+def payload_from_yaml(workflow_loc, config_only = False):
     """
     Returns a JSON string of the results_for_payload dictionary and a list of additional artifacts.
     
@@ -203,7 +203,7 @@ def payload_from_yaml(workflow_loc):
     """
     yaml_dict = get_yaml(workflow_loc)
     
-    if yaml_dict['output_settings'].get('folder'):
+    if (yaml_dict['output_settings'].get('folder') and config_only == False):
         results_for_payload, additional_artifacts = payload_from_folder(yaml_dict['output_settings']['folder'], yaml_dict)
     else:
         results_for_payload, additional_artifacts = payload_from_config(yaml_dict)
