@@ -135,13 +135,17 @@ def run_pre_demo_steps(workflow_filename: str):
         request = {'job_id':'test'}
         
     #set defaults where not present
-    for key, value in yaml_dict['parameters'].items():
+    for key, parameter in yaml_dict['parameters'].items():
         # Check if default is present
         if key not in request:
-            try:
-                request[key] = value['default']
+            try:    
+                request[key] = parameter['default']
             except:
                 print(f"Default not set for parameter {key}. Will this cause issues?")
+        elif parameter['type']=='int':
+            request[key] = int(request[key])
+        elif parameter['type']=='float':
+            request[key] = float(request[key])
     
     #set input files to the demo files
     request['input_files']={}
