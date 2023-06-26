@@ -167,7 +167,7 @@ def run_post_demo_steps(request: dict, workflow_filename: str):
     workflow_loc = '/app/' + workflow_filename
     yaml_dict = get_yaml(workflow_loc)
     
-    if (exists('/app/results_for_payload.json')) and (exists('/app/results_for_upload.json')):
+    if exists('/app/results_for_payload.json') and exists('/app/results_for_upload.json'):
         print("Generating payload from custom json")
         with open('/app/results_for_payload.json', 'r') as f:
             results_for_payload = json.load(f)
