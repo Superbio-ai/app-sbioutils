@@ -116,25 +116,33 @@ class AppRunnerUtils:
  
     @classmethod
     def get_job_config(cls, job_id: str):
-        token = cls.get_api_token()
-        api_url = os.environ.get("SBIO_API_URL")
-        headers = {'Authorization': f'Bearer {token}'}
-        response = requests.get(f'{api_url}/api/jobs/{job_id}/config', headers=headers)
-        if response.status_code == 200:
-            return response.json()['config']          
+        if "JOB_CONFIG" in os.environ:
+            response =  eval(os.environ.get("JOB_CONFIG"))
+            return response
         else:
-            logging.error(response)
+            token = cls.get_api_token()
+            api_url = os.environ.get("SBIO_API_URL")
+            headers = {'Authorization': f'Bearer {token}'}
+            response = requests.get(f'{api_url}/api/jobs/{job_id}/config', headers=headers)
+            if response.status_code == 200:
+                return response.json()['config']          
+            else:
+                logging.error(response)
 
     @classmethod
     def get_job_config_v2(cls, job_id: str):
-        token = cls.get_api_token()
-        api_url = os.environ.get("SBIO_API_URL")
-        headers = {'Authorization': f'Bearer {token}'}
-        response = requests.get(f'{api_url}/api/jobs/{job_id}/config?version=v2', headers=headers)
-        if response.status_code == 200:
-            return response.json()['config']
+        if "JOB_CONFIG" in os.environ:
+            response =  eval(os.environ.get("JOB_CONFIG"))
+            return response
         else:
-            logging.error(response)
+            token = cls.get_api_token()
+            api_url = os.environ.get("SBIO_API_URL")
+            headers = {'Authorization': f'Bearer {token}'}
+            response = requests.get(f'{api_url}/api/jobs/{job_id}/config?version=v2', headers=headers)
+            if response.status_code == 200:
+                return response.json()['config']
+            else:
+                logging.error(response)
 
     @classmethod
     def set_job_running(cls, job_id: str):

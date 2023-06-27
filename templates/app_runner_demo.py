@@ -47,7 +47,9 @@ def main():
     _set_environ()
     try:
         #demo code
+        print(f"Workflow filename: {workflow_filename}")
         request, stages, parameters =  run_pre_demo_steps(workflow_filename)
+        print(f"Workflow name: {request['workflow_name']}")
         _, _ = parse_workflow(request)
         request['workflow_filename'] = workflow_filename
         print(f'Demo config has been parsed: {request}')
@@ -64,6 +66,8 @@ def main():
             _process_stage(stage_name, stage_value, request)
             
         run_post_demo_steps(request, workflow_filename)
+        print("Demo completed")
+        
         
     except Exception as e:
         err = str(e)
