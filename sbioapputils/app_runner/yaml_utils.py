@@ -129,21 +129,21 @@ def define_settings_from_yaml(workflow_loc):
     inputs_require_files = []
     input_parameters = []
         
-    for key in parameters.keys():
-        if parameters[key].get('user_defined'):
-            if parameters[key]['user_defined'] == 'True':
-                if not parameters[key].get('tooltip'):
-                    parameters[key]['tooltip'] = key
-                if not parameters[key].get('title'):
-                    parameters[key]['title'] = key
+    for key, parameter in parameters.items():
+        if parameter.get('user_defined'):
+            if parameter['user_defined'] == 'True':
+                if not parameter.get('tooltip'):
+                    parameter['tooltip'] = key
+                if not parameter.get('title'):
+                    parameter['title'] = key
                     
                 # Numeric settings
-                if parameters[key].get('type'):
-                    if parameters[key]['type'] in ['int', 'float']:
-                        input_parameters = _define_from_numeric(parameters[key], key, input_parameters)
+                if parameter.get('type'):
+                    if parameter['type'] in ['int', 'float']:
+                        input_parameters = _define_from_numeric(parameter, key, input_parameters)
                     
-                    elif parameters[key]['type'] == 'str':
-                        input_parameters, inputs_require_files = _define_from_string(parameters[key], key, input_parameters, inputs_require_files)
+                    elif parameter['type'] == 'str':
+                        input_parameters, inputs_require_files = _define_from_string(parameter, key, input_parameters, inputs_require_files)
                 else:
                     raise Exception(f"Please define 'type' for parameter {key}")
  
@@ -211,11 +211,11 @@ def payload_from_yaml(workflow_loc, config_only = False):
     return results_for_payload, additional_artifacts
     
 
-def _generate_carousel(output_settings_dict, result_type_key):
+def _generate_carousel(carousel_settings_dict):
     full_files = []
-    for carousel in output_settings_dict[result_type_key].keys():
+    for carousel in carousel_settings_dict.keys():
         carousel_files = []
-        for output_key, output_value in output_settings_dict[result_type_key][carousel].items():
+        for output_key, output_value in carousel_settings_dict[carousel].items():
             file = output_value['file']
             if file[0]=='/':
                 file = file[1:] 
@@ -228,26 +228,27 @@ def _generate_carousel(output_settings_dict, result_type_key):
 def payload_from_config(yaml_dict):    
     print("Generating payload from output config")
     results_for_payload = {}
+    output_settings = yaml_dict['output_settings']
     
-    if yaml_dict['output_settings'].get('images'):
-        results_for_payload['images'] = _generate_carousel(output_settings_dict=yaml_dict['output_settings'], result_type_key='images')
+    if output_settings.get('images'):
+        results_for_payload['images'] = _generate_carousel(carousel_settings_dict=output_settings['images'])
         
-    if yaml_dict['output_settings'].get('figures'):
-        results_for_payload['figures'] = _generate_carousel(output_settings_dict=yaml_dict['output_settings'], result_type_key='figures')
+    if output_settings.get('figures'):
+        results_for_payload['figures'] = _generate_carousel(carousel_settings_dict=output_settings['figures'])
         
-    if yaml_dict['output_settings'].get('tables'):
-        results_for_payload['tables'] = _generate_carousel(output_settings_dict=yaml_dict['output_settings'], result_type_key='tables')
+    if output_settings.get('tables'):
+        results_for_payload['tables'] = _generate_carousel(carousel_settings_dict=output_settings['tables'])
         
-    if yaml_dict['output_settings'].get('download'):
+    if output_settings.get('download'):
         full_files = []
-        for output_file in yaml_dict['output_settings']['download'].keys():
-            full_files.append({'file': yaml_dict['output_settings']['download'][output_file]['file'],
-                                 'title': yaml_dict['output_settings']['download'][output_file]['title']})
+        for output_file in output_settings['download'].keys():
+            full_files.append({'file': output_settings['download'][output_file]['file'],
+                                 'title': output_settings['download'][output_file]['title']})
         results_for_payload['download'] = full_files
         
     additional_artifacts = []
-    if yaml_dict['output_settings'].get('artifacts'):
-        for output_file, output_value in yaml_dict['output_settings']['artifacts'].items():
+    if output_settings.get('artifacts'):
+        for output_file, output_value in output_settings['artifacts'].items():
             additional_artifacts.append(output_value['file'])        
         
     return results_for_payload, additional_artifacts
@@ -287,27 +288,28 @@ def payload_from_folder(folder_loc, yaml_dict):
             else:
                 additional_artifacts.append(folder_loc + file)
     
+    output_settings = yaml_dict['output_settings']
     #override get from folder if config provided in yaml
-    if yaml_dict['output_settings'].get('images'):
-        results_for_payload['images'] = _generate_carousel(output_settings_dict=yaml_dict['output_settings'], result_type_key='images')
+    if output_settings.get('images'):
+        results_for_payload['images'] = _generate_carousel(carousel_settings_dict=output_settings['images'])
     else:
         results_for_payload['images'] = [_generate_file_dict(images)]
         
-    if yaml_dict['output_settings'].get('figures'):
-        results_for_payload['figures'] = _generate_carousel(output_settings_dict=yaml_dict['output_settings'], result_type_key='figures')
+    if output_settings.get('figures'):
+        results_for_payload['figures'] = _generate_carousel(carousel_settings_dict=output_settings['figures'])
     else:
         results_for_payload['figures'] = [_generate_file_dict(figures)]
         
-    if yaml_dict['output_settings'].get('tables'):
-        results_for_payload['tables'] = _generate_carousel(output_settings_dict=yaml_dict['output_settings'], result_type_key='tables')
+    if output_settings.get('tables'):
+        results_for_payload['tables'] = _generate_carousel(carousel_settings_dict=output_settings['tables'])
     else:
         results_for_payload['tables'] = [_generate_file_dict(tables)]
         
-    if yaml_dict['output_settings'].get('download'):
+    if output_settings.get('download'):
         full_files = []
-        for output_file in yaml_dict['output_settings']['download'].keys():
-            full_files.append({'file': yaml_dict['output_settings']['download'][output_file]['file'],
-                                 'title': yaml_dict['output_settings']['download'][output_file]['title']})
+        for output_file in output_settings['download'].keys():
+            full_files.append({'file': output_settings['download'][output_file]['file'],
+                                 'title': output_settings['download'][output_file]['title']})
         results_for_payload['download'] = full_files
     
     return results_for_payload, additional_artifacts            
