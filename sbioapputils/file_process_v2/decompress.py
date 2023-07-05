@@ -15,11 +15,10 @@ def decompress(src: str, dest: str):
         os.remove(src)
     elif src.endswith("tar"):
         tar = tarfile.open(src, "r:")
-        tar.extractall()
+        tar.extractall(dest)
         tar.close()
     elif src.endswith("zip"):
         with zipfile.ZipFile(src,"r") as zip_ref:
             zip_ref.extractall(dest)
     else:
         pass
-    

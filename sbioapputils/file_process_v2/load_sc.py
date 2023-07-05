@@ -4,7 +4,7 @@ import h5py
 import numpy as np
 
     
-SCRNA_EXTENSIONS = ['h5ad','h5','loom','h5Seurat']
+SCRNA_EXTENSIONS = ['h5ad','h5','h5Seurat']
 SCRNA_FORMATS = ['anndata']
 
 
@@ -13,8 +13,6 @@ def _h5_process(file):
    data_mat = h5py.File(file, 'r')
    #start processing data
    x = np.array(data_mat['X'])
-   # y is the ground truth labels for evaluating clustering performance
-   # If not existing, we skip calculating the clustering performance metrics (e.g. NMI ARI)
    if 'Y' in data_mat:
        y = np.array(data_mat['Y'])
    else:
@@ -28,19 +26,18 @@ def _h5_process(file):
    
    return adata
    
-#to add: loom and rds support
-def load_sc(file: BytesIO, ext = 'h5ad', target_format = 'anndata', **kwargs):
-    
+#to add: loom, h5seurat and rds support
+def load_sc(file: BytesIO, target_format = 'anndata', **kwargs):
+    ext = file.split('.')[-1]
+
     if ext in SCRNA_EXTENSIONS:
         if ext == 'h5':
             adata = _h5_process(file)
         elif ext in ['h5ad','h5Seurat']:
-            adata == anndata.read_h5ad(file)
-        elif ext == 'loom':
-            #kwargs here can include key where x matrix, obs_names and var_names are stored
-            anndata.read_loom(file, **kwargs)    
+            adata = anndata.read_h5ad(file)
+
     else:
-        print("Only {SCRNA_EXTENSIONS} file extensions are currently handled for loading SC-RNA data. For R file formats we recommend first converting to either .loom or .h5Seurat format which can be done relatively easily using the LoomR or Seurat libraries")
+        print("Only {SCRNA_EXTENSIONS} file extensions are currently handled for loading SC-RNA data. For R file formats we recommend first converting to .h5Seurat format which can be done relatively easily using the Seurat R library")
     
     return adata
        
