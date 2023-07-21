@@ -44,7 +44,10 @@ def _set_environ():
                 
 def main():
     workflow_filename = sys.argv[1]
-    _set_environ()
+    try:
+        _set_environ()
+    except:
+        print("Error with setting environment variables. Is JOB_CONFIG provided correctly in .env?")
     try:
         #demo code
         print(f"Workflow filename: {workflow_filename}")
