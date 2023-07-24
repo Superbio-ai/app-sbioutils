@@ -44,7 +44,7 @@ def _upload_results(job_id: str):
         with open('/app/results_for_payload.json', 'r') as f:
             results_for_payload = json.load(f)
         with open('/app/results_for_upload.json', 'r') as f:
-            results_for_upload = json.load(f)
+            additional_artifacts = json.load(f)
     else:
         logging.info("Generating payload from yaml file")
         results_for_payload, additional_artifacts = payload_from_yaml('/app/workflow.yml')
