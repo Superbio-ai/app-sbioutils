@@ -47,8 +47,7 @@ def _upload_results(job_id: str):
             results_for_upload = json.load(f)
     else:
         logging.info("Generating payload from yaml file")
-        yaml_dict = get_yaml('/app/workflow.yml')
-        results_for_payload, additional_artifacts = payload_from_yaml(yaml_dict)
+        results_for_payload, additional_artifacts = payload_from_yaml('/app/workflow.yml')
     results_for_payload = remove_empty_keys(results_for_payload)
     
     #upload results
