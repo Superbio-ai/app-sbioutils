@@ -109,7 +109,7 @@ def _define_from_string(para_dict, key, input_parameters, inputs_require_files):
     return(input_parameters, inputs_require_files)
     
 
-def define_settings_from_yaml(workflow_loc):
+def define_settings_from_yaml(workflow_loc, out_dir = None):
     '''
     _define_files_from_yaml is a helper function that returns a list of input file elements based on the information in the YAML file. Each input file element is a dictionary that specifies the properties of an input file that can be uploaded to the web application. The function checks the type of the input file (table, image, or single cell) and uses a corresponding template from the templates module to set the default values for the file properties.
 
@@ -185,11 +185,15 @@ def define_settings_from_yaml(workflow_loc):
         "resultsConfig": results_config,
         "settingsConfig": settings_config
     }
+    
+    if out_dir:
+        with open(out_dir + 'app_settings.json', 'w') as f:
+            json.dumps(app_settings, f)
             
     return json.dumps(app_settings)
 
 
-def payload_from_yaml(workflow_loc, config_only = False):
+def payload_from_yaml(workflow_loc, config_only = False, out_dir = None):
     """
     Returns a JSON string of the results_for_payload dictionary and a list of additional artifacts.
     
@@ -208,6 +212,12 @@ def payload_from_yaml(workflow_loc, config_only = False):
     else:
         results_for_payload, additional_artifacts = payload_from_config(yaml_dict)
     
+    if out_dir:
+        with open(out_dir + 'payload.json', 'w') as f:
+            json.dumps(results_for_payload, f)
+        with open(out_dir + 'additional.json', 'w') as f:
+            json.dumps(additional_artifacts, f)
+            
     return results_for_payload, additional_artifacts
     
 
