@@ -6,5 +6,5 @@ setup(name="sbioapputils",
       author_email="smorgan@superbio.ai",
       url='https://github.com/Superbio-ai/app-sbioutils',
       install_requires=['requests==2.22.0', 'boto3==1.21.27', 'pyflakes', 'pycodestyle', 'pandas>=1.2.5', 'anndata>=0.8.0', 'scanpy>=1.9.1', 'numpy>=1.21'],
-      packages=['sbioapputils','sbioapputils.app_runner','sbioapputils.file_process','sbioapputils.file_process.h5ad','sbioapputils.file_process.csv','sbioapputils.load']
+      packages=['sbioapputils','sbioapputils.app_runner','sbioapputils.load']
 )
