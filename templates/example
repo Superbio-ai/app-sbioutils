@@ -1,0 +1,13 @@
+name: MyApp
+
+stages:
+    prepare: {file: '/scripts/prepare.py'}
+    train: {file: '/scripts/train.py'}
+
+parameters:
+    target: {name: 'Target (Label)', type: 'str', default: 'cell_states', user_defined: 'True', labels_from_data: 'True', tooltip: 'Choose variable representing the entity of interest (most commonly cell type)'}
+    validation_ratio: {name: 'Validation Ratio', type: 'float', default: 0.3, user_defined: 'True', min_value: 0.1, max_value: 0.5, increment: 0.1, tooltip: 'Ratio of training data to use for validation'}
+    another_parameter: {type: 'str', default: 'option2', options: ['option1','option2','option3']}
+    
+input_settings:
+    test_path: {title: 'Input data', description: 'Data should be in csv format', type: 'tabular', demo_data: 'MyDemoData.csv', demo_description: 'A subset of data taken from XYZ paper', url: 'www.linktomypaper.com'}
