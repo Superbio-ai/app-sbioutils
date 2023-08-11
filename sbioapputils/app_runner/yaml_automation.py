@@ -1,4 +1,5 @@
 import yaml
+from .templates import csv_template, image_template, sc_template, default_template
 
 #if the below are present then use the relevant package
 argparse_tags = ['from argparse', 'import argparse', 'ArgumentParser']
@@ -154,6 +155,28 @@ def _format_argparse_parameters(parameters):
     return(parameters)
 
 
+def input_yaml_from_args(files):
+    if type(files) == str:
+        files = [files]
+    input_settings = {}
+    
+    for file in files:
+        #load template
+        filename, fileext = file.split(".")
+        if fileext in csv_template['allowedFormats']['fileExtensions']:
+            input_template = csv_template.copy()
+        elif fileext in image_template['allowedFormats']['fileExtensions']:
+            input_template = image_template.copy()
+        elif fileext in sc_template['allowedFormats']['fileExtensions']:
+            input_template = sc_template.copy()
+        else:
+            input_template = default_template.copy()
+        
+        input_settings[filename] = input_template
+    
+    return(input_settings)
+
+
 def parameters_yaml_from_args(files, outfileloc = None):
     if type(files) == str:
         files = [files]
@@ -170,12 +193,14 @@ def parameters_yaml_from_args(files, outfileloc = None):
     elif library == 'click':
         formatted_parameters = _format_argparse_parameters(parameters)   #mostly same for arguments we are using
     
-    #stages = _stages_from_scripts(files)
-    out_dict = {'parameters' : formatted_parameters,
-                #'stages' : stages,
+    stages = _stages_from_scripts(files)
+    input_settings = input_yaml_from_args(files)
+    
+    out_dict = {'stages' : stages,
+                'parameters' : formatted_parameters,
+                'input_settings' : input_settings
                }
-    #input settings not covered
-    #nor output settings
+    #output settings not covered
     
     if outfileloc:
         with open(outfileloc, 'w') as outfile:
