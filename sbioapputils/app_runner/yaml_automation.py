@@ -155,25 +155,32 @@ def _format_argparse_parameters(parameters):
     return(parameters)
 
 
-def input_yaml_from_args(files):
-    if type(files) == str:
-        files = [files]
+def input_yaml_from_args(parameters):
+    
     input_settings = {}
     
-    for file in files:
-        #load template
-        filename, fileext = file.split(".")
-        if fileext in csv_template['allowedFormats']['fileExtensions']:
-            input_template = csv_template.copy()
-        elif fileext in image_template['allowedFormats']['fileExtensions']:
-            input_template = image_template.copy()
-        elif fileext in sc_template['allowedFormats']['fileExtensions']:
-            input_template = sc_template.copy()
-        else:
-            input_template = default_template.copy()
-        
-        input_settings[filename] = input_template
-    
+    for parameter_dict in parameters.values():
+        if all(k in parameter_dict.keys() for k in ("type","default")):
+            if parameter_dict['type'] in ['path','str']:
+                file_split = parameter_dict['default'].split('.')
+                #if a path then usually has two parts
+                if len(file_split) == 2:
+                    filename = file_split[0]
+                    fileext = file_split[1]
+                    if fileext in csv_template['allowedFormats']['fileExtensions']:
+                        input_template = csv_template.copy()
+                        input_settings[filename] = input_template
+                    elif fileext in image_template['allowedFormats']['fileExtensions']:
+                        input_template = image_template.copy()
+                        input_settings[filename] = input_template
+                    elif fileext in sc_template['allowedFormats']['fileExtensions']:
+                        input_template = sc_template.copy()
+                        input_settings[filename] = input_template
+                    #commenting out to avoid false positives
+                    #else:
+                    #    input_template = default_template.copy()
+                    #    input_settings[filename] = input_template
+
     return(input_settings)
 
 
@@ -186,15 +193,13 @@ def parameters_yaml_from_args(files, outfileloc = None):
         filelines, library = _parse_input_python(file)
         new_parameters = _dict_from_args(filelines, library)
         parameters = {**parameters, **new_parameters}
-        #except:
-            #print(f"Arguments not parsed for {file}. A default template will be presented instead")
     if library == 'argparse':
         formatted_parameters = _format_argparse_parameters(parameters)
     elif library == 'click':
         formatted_parameters = _format_argparse_parameters(parameters)   #mostly same for arguments we are using
     
     stages = _stages_from_scripts(files)
-    input_settings = input_yaml_from_args(files)
+    input_settings = input_yaml_from_args(parameters)
     
     out_dict = {'stages' : stages,
                 'parameters' : formatted_parameters,
