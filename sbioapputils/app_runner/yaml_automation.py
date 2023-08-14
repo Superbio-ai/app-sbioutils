@@ -1,16 +1,8 @@
 import yaml
+#input settings templates
 from .templates import csv_template, image_template, sc_template, default_template
-
-#if the below are present then use the relevant package
-argparse_tags = ['from argparse', 'import argparse', 'ArgumentParser']
-click_tags = ['from click', 'import click']
-
-#
-allowed_types = ['str','int','float','path','boolean']
-allowed_args = ['type','default','tooltip','min_value','max_value','increment','user_defined','options','from_data','input_type']
-boolean_values = ['True','False','true','false',True,False]
-
-#add error handling
+#tags for library argument parsing
+from .templates import argparse_tags, click_tags, allowed_types, allowed_args, boolean_values
 
 
 def _parse_input_python(file_loc):
@@ -163,7 +155,7 @@ def input_yaml_from_args(parameters):
         if all(k in parameter_dict.keys() for k in ("type","default")):
             if parameter_dict['type'] in ['path','str']:
                 file_split = parameter_dict['default'].split('.')
-                #if a path then usually has two parts
+                #if a path, then usually has two parts
                 if len(file_split) == 2:
                     filename = file_split[0]
                     fileext = file_split[1]
