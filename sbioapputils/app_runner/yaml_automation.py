@@ -24,7 +24,7 @@ def _parse_input_python(file_loc):
             click_flag = True
     file.close()
     
-    if (argparse_flag) and (not click_flag):
+    if argparse_flag and not click_flag:
         print(f"argparse detected in {file_loc}")
         return(line_array, "argparse")
     elif (click_flag) and (not argparse_flag):
