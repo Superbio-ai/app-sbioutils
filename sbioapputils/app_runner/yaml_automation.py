@@ -24,18 +24,15 @@ def _parse_input_python(file_loc):
             click_flag = True
     file.close()
     
-    if (argparse_flag) and (not click_flag):
+    if argparse_flag and not click_flag:
         print(f"argparse detected in {file_loc}")
-        return(line_array, "argparse")
-    elif (click_flag) and (not argparse_flag):
+        return line_array, "argparse"
+    elif click_flag and not argparse_flag:
         print(f"click detected in {file_loc}")
-        return(line_array, "click")
-    elif (not click_flag) and (not argparse_flag):
-        #raise exception: provide default template in UI
-        print(f"Neither argparse nor click detected in {file_loc}")
-    elif click_flag and argparse_flag:
-        #raise exception: provide default template in UI
+        return line_array, "click"
+    else:
         print("Cannot discern if argparse or click are used")
+        return None, None
         
         
 def _dict_from_args(filelines, library):
@@ -46,32 +43,36 @@ def _dict_from_args(filelines, library):
         
     parameter_dict = {}
     for line in filelines:
-        if arg_command in line:
+        if arg_command not in line:
+            continue
+        else:
             arg_string = line.split(f"{arg_command}(")[1]
             arguments = arg_string.split(',')
             argname = arguments[0].split('--')[1].strip().strip("'")
-            parameter_dict[argname]={}
+            parameter_dict[argname] = {}
+            
             for argument in arguments[1:]:
                 argument_split = argument.strip().split('=')
                 arg_value = ''.join(argument_split[1:])
-                if len(arg_value.strip("'"))==0:
+                if len(arg_value.strip("'")) == 0:
                     continue
-                if arg_value.count('(')<arg_value.count(')'):
+                if arg_value.count('(') < arg_value.count(')'):
                     arg_value = arg_value.rstrip(')')
                 if arg_value[0] == "'" and arg_value[-1] == "'":
                     arg_value = arg_value[1:-1]
-                if len(argument_split)>1:
+                if len(argument_split) > 1:
                     parameter_dict[argname][argument_split[0]] = arg_value
-    return(parameter_dict)
+                    
+    return parameter_dict
 
 
-def _stages_from_scripts(files):
+def _stages_from_scripts(filenames):
     stages = {}
     #n.b. these should be provided in order
-    for file in files:
+    for file in filenames:
         file_name = file.split('/')[-1].split('.py')[0]
         stages[file_name] = {'file' : file}
-    return(stages)
+    return stages
 
 
 def _is_float(string):
@@ -116,13 +117,13 @@ def _format_argparse_parameters(parameters):
                 subdict['type'] = 'str'
         #adjusting naming conventions
         if 'help' in subdict:
-            parameters[key]['tooltip'] = parameters[key].pop('help')
+            subdict['tooltip'] = subdict.pop('help')
         if 'choices' in subdict:
-            parameters[key]['options'] = parameters[key].pop('choices')
+            subdict['options'] = subdict.pop('choices')
         if 'min' in subdict:
-            parameters[key]['min_value'] = parameters[key].pop('min')
+            subdict['min_value'] = subdict.pop('min')
         if 'max' in subdict:
-            parameters[key]['max_value'] = parameters[key].pop('max')
+            subdict['max_value'] = subdict.pop('max')
         #adjusting number formatting
         if 'type' in subdict:
             if subdict['type'] in ['int', 'float']:
@@ -143,8 +144,8 @@ def _format_argparse_parameters(parameters):
         for argkey in subdict.keys():
             if argkey not in allowed_args:
                 del_list.append(argkey)
-        [parameters[key].pop(argkey) for argkey in del_list]
-    return(parameters)
+        [subdict.pop(argkey) for argkey in del_list]
+    return parameters
 
 
 def input_yaml_from_args(parameters):
@@ -152,45 +153,44 @@ def input_yaml_from_args(parameters):
     input_settings = {}
     
     for parameter_dict in parameters.values():
-        if all(k in parameter_dict.keys() for k in ("type","default")):
-            if parameter_dict['type'] in ['path','str']:
-                file_split = parameter_dict['default'].split('.')
-                #if a path, then usually has two parts
-                if len(file_split) == 2:
-                    filename = file_split[0]
-                    fileext = file_split[1]
-                    if fileext in csv_template['allowedFormats']['fileExtensions']:
-                        input_template = csv_template.copy()
-                        input_settings[filename] = input_template
-                    elif fileext in image_template['allowedFormats']['fileExtensions']:
-                        input_template = image_template.copy()
-                        input_settings[filename] = input_template
-                    elif fileext in sc_template['allowedFormats']['fileExtensions']:
-                        input_template = sc_template.copy()
-                        input_settings[filename] = input_template
-                    #commenting out to avoid false positives
-                    #else:
-                    #    input_template = default_template.copy()
-                    #    input_settings[filename] = input_template
+        if not all(k in parameter_dict.keys() for k in ("type","default")):
+            continue
+        elif not parameter_dict['type'] in ['path','str']:
+            continue
+        else:
+            file_split = parameter_dict['default'].split('.')
+            #if a path, then usually has two parts
+            if len(file_split) == 2:
+                filename = file_split[0]
+                fileext = file_split[1]
+                if fileext in csv_template['allowedFormats']['fileExtensions']:
+                    input_template = csv_template.copy()
+                    input_settings[filename] = input_template
+                elif fileext in image_template['allowedFormats']['fileExtensions']:
+                    input_template = image_template.copy()
+                    input_settings[filename] = input_template
+                elif fileext in sc_template['allowedFormats']['fileExtensions']:
+                    input_template = sc_template.copy()
+                    input_settings[filename] = input_template
 
-    return(input_settings)
+    return input_settings
 
 
-def parameters_yaml_from_args(files, outfileloc = None):
-    if type(files) == str:
-        files = [files]
+def parameters_yaml_from_args(filenames, outfileloc = None):
+    if type(filenames) == str:
+        filenames = [filenames]
     parameters = {}
     
-    for file in files:
+    for file in filenames:
         filelines, library = _parse_input_python(file)
-        new_parameters = _dict_from_args(filelines, library)
-        parameters = {**parameters, **new_parameters}
-    if library == 'argparse':
+        if library != None:
+            new_parameters = _dict_from_args(filelines, library)
+            parameters = {**parameters, **new_parameters}
+    if library in ['argparse','click']:
+        #may have different function for other libraries if we add more support
         formatted_parameters = _format_argparse_parameters(parameters)
-    elif library == 'click':
-        formatted_parameters = _format_argparse_parameters(parameters)   #mostly same for arguments we are using
     
-    stages = _stages_from_scripts(files)
+    stages = _stages_from_scripts(filenames)
     input_settings = input_yaml_from_args(parameters)
     
     out_dict = {'stages' : stages,
@@ -203,4 +203,4 @@ def parameters_yaml_from_args(files, outfileloc = None):
         with open(outfileloc, 'w') as outfile:
             yaml.dump(out_dict, outfile, default_flow_style=False)
     yaml_obj = yaml.dump(out_dict, default_flow_style=False)
-    return(yaml_obj)
+    return yaml_obj
