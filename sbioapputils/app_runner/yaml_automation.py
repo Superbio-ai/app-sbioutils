@@ -1,4 +1,5 @@
 import yaml
+from copy import deepcopy
 #input settings templates
 from .templates import csv_template, image_template, sc_template, default_template
 #tags for library argument parsing
@@ -96,7 +97,9 @@ def _attempt_numeric(string, ntype):
             return string        
         
 
-def _format_argparse_parameters(parameters):
+def _format_argparse_parameters(input_parameters):
+    parameters = deepcopy(input_parameters)
+    
     for key, subdict in parameters.items():
         #inferring / correcting type 
         if 'type' in subdict:
