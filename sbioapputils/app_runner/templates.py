@@ -8,9 +8,10 @@ csv_template = {
     },
     "dataStructure": "Data should be in .csv, .tsv or .txt format",
     "disabled": False,
-    "name": "table",
     "supportsPreview": True,
     "title": "Input Tabular Data",
+    "description": "Insert desccription here",
+    "type": "tabular",
     "uploadTypes": [
         {
             "title": "Local",
@@ -25,15 +26,16 @@ csv_template = {
 
 image_template = {
     "allowedFormats": {
-        "fileExtensions": ["zip"],
+        "fileExtensions": ["zip","gz","tar"],
         "title": ".zip",
         "value": ""
     },
-    "dataStructure": "Images should be provided in a .zip compressed file",
+    "dataStructure": "Images should be provided in a .zip .gz or .tar compressed file",
     "disabled": False,
-    "name": "image",
     "supportsPreview": False,
     "title": "Input Image Data",
+    "description": "Insert desccription here",
+    "type": "images",
     "uploadTypes": [
         {
             "title": "Local",
@@ -54,9 +56,10 @@ sc_template = {
     },
     "dataStructure": "Data should be in .h5ad or .h5 format",
     "disabled": False,
-    "name": "anndata",
     "supportsPreview": True,
     "title": "Input Annotated Data",
+    "description": "Insert desccription here",
+    "type": "single-cell",
     "uploadTypes": [
         {
             "title": "Local",
@@ -77,6 +80,9 @@ default_template = {
     },
     "disabled": False,
     "supportsPreview": False,
+    "title": "Input Data",
+    "description": "Insert desccription here",
+    "type": "Unknown",
     "uploadTypes": [
         {
             "title": "Local",
@@ -89,3 +95,11 @@ default_template = {
     ],
     "dataStructure": ""
 }
+
+#if the below are present then use the relevant package
+argparse_tags = ['from argparse', 'import argparse', 'ArgumentParser']
+click_tags = ['from click', 'import click']
+allowed_types = ['str','int','float','path','boolean']
+allowed_args = ['type','default','tooltip','min_value','max_value','increment','user_defined','options','from_data','input_type']
+boolean_values = ['True','False','true','false',True,False]
+

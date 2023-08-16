@@ -44,10 +44,10 @@ def _upload_results(job_id: str):
         with open('/app/results_for_payload.json', 'r') as f:
             results_for_payload = json.load(f)
         with open('/app/results_for_upload.json', 'r') as f:
-            additional_artifacts = json.load(f)
+            results_for_upload = json.load(f)
     else:
         logging.info("Generating payload from yaml file")
-        results_for_payload, additional_artifacts = payload_from_yaml('/app/workflow.yml')
+        results_for_payload, results_for_upload = payload_from_yaml('/app/workflow.yml')
     results_for_payload = remove_empty_keys(results_for_payload)
     
     #upload results
@@ -56,8 +56,8 @@ def _upload_results(job_id: str):
 
     AppRunnerUtils.upload_results(job_id, results_for_payload)
     logging.info('Additional artifacts:')
-    logging.info(additional_artifacts)
-    for element in additional_artifacts:
+    logging.info(results_for_upload)
+    for element in results_for_upload:
         AppRunnerUtils.upload_file(job_id, element)
     AppRunnerUtils.set_job_completed(job_id, results_for_payload)
 
