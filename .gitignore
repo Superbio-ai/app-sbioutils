@@ -1,4 +1,5 @@
 .idea/
 .build/
-.sbioapputils.egg-info/
+sbioapputils.egg-info/
 .env
+dist/
