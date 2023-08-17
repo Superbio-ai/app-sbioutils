@@ -3,7 +3,6 @@ requires = ["setuptools>=65"]
 build-backend = "setuptools.build_meta"
 [project]
 name = "sbioapputils"
-version = "1.0.16"
 authors = [
   { name="Superbio AI", email="smorgan@superbio.ai" },
 ]
@@ -17,7 +16,7 @@ classifiers = [
     'Topic :: Software Development :: Build Tools',
     "Operating System :: OS Independent",
 ]
-dependencies = ['requests==2.22.0', 'boto3==1.21.27', 'pyflakes', 'pycodestyle', 'file_process@git+https://github.com/Superbio-ai/file-process']
+dependencies = ['requests==2.22.0', 'boto3==1.21.27', 'pyflakes', 'pycodestyle', 'file-process']
 [project.urls]
 "Homepage" = "https://github.com/Superbio-ai/app-sbioutils"
 "Bug Tracker" = "https://github.com/Superbio-ai/app-sbioutils/issues"
