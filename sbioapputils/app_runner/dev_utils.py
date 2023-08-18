@@ -138,12 +138,14 @@ def run_pre_demo_steps(workflow_filename: str):
         
         # Check if default is present
         if key not in request:
+            print(key)
             if parameter.get("optional") is not None:
                 print(parameter['optional'])
                 if parameter['optional'] == 'true':
                     continue
             try:    
                 request[key] = parameter['default']
+                parameter['default']
             except:
                 print(f"Default not set for parameter {key}. Will this cause issues?")
         elif parameter['type']=='int':
