@@ -1,6 +1,7 @@
 from setuptools import setup
 
-setup(name="sbioapputils",
+setup(
+      name="sbioapputils",
       version="1.0.19",
       description="Superbio app runner utils",
       author="Superbio AI",
