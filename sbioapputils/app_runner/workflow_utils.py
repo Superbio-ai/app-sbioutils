@@ -21,9 +21,7 @@ def parse_workflow(request, job_id):
     stages = yaml_dict['stages']
     parameters = yaml_dict['parameters']
     
-    print(f"Original request: {request}")
     out_request = set_defaults(request, parameters, job_id)
-    print(f"New request: {out_request}")
     
     return stages, parameters, out_request
 
