@@ -118,10 +118,11 @@ class AppRunnerUtils:
     def get_job_config(cls, job_id: str):
         if "JOB_CONFIG" in os.environ:
             try:
+                print(os.environ.get("JOB_CONFIG"))
                 response =  eval(os.environ.get("JOB_CONFIG"))
                 return response
             except:
-                logging.error(response)
+                print("OS environ error with job_config evaluation")
         token = cls.get_api_token()
         api_url = os.environ.get("SBIO_API_URL")
         headers = {'Authorization': f'Bearer {token}'}
