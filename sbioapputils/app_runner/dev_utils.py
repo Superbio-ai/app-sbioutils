@@ -135,8 +135,13 @@ def run_pre_demo_steps(workflow_filename: str):
         
     #set defaults where not present
     for key, parameter in yaml_dict['parameters'].items():
+        
         # Check if default is present
         if key not in request:
+            if parameter.get("optional") is not None:
+                print(parameter['optional'])
+                if parameter['optional'] == 'true':
+                    continue
             try:    
                 request[key] = parameter['default']
             except:
