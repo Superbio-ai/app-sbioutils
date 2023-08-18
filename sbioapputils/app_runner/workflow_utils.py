@@ -55,11 +55,14 @@ def set_defaults(request, parameters, job_id):
     for key, parameter in parameters.items():
         # Check if default is present
         if key not in request:
+            print(key)
             if key.get("optional") is not None:
                 if key['optional'] == 'true':
+                    print(f"{key} is optional")
                     continue
             else:
                 request[key] = parameter['default']
+                print(f"key set to {request[key]}")
         
         #convert 'None' to None
         if request[key] == 'None':
