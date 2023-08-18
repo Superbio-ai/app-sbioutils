@@ -4,7 +4,7 @@ import yaml
 import shutil
 
 
-def parse_workflow(request):
+def parse_workflow(request, job_id):
     """Helper function to parse the workflow configuration."""
     workflow_loc = "app/workflow.yml"
     if request.get('workflow_name'):
@@ -21,7 +21,9 @@ def parse_workflow(request):
     stages = yaml_dict['stages']
     parameters = yaml_dict['parameters']
     
-    return stages, parameters
+    out_request = set_defaults(request, parameters, job_id)
+    
+    return stages, parameters, out_request
 
 
 def dir_path(string):
@@ -53,7 +55,11 @@ def set_defaults(request, parameters, job_id):
     for key, parameter in parameters.items():
         # Check if default is present
         if key not in request:
-            request[key] = parameter['default']
+            if key.get("optional") is not None:
+                if key['optional'] == 'true':
+                    continue
+            else:
+                request[key] = parameter['default']
         
         #convert 'None' to None
         if request[key] == 'None':
