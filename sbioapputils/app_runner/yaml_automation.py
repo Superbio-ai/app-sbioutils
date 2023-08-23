@@ -186,14 +186,6 @@ def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str]):
     formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
 
     stages = _stages_from_scripts(filenames)
-    input_settings = input_yaml_from_args(parameters)
-    
-    out_dict = {
-        'stages': stages,
-        'parameters': formatted_parameters,
-        'input_settings': input_settings
-    }
+    input_settings = input_yaml_from_args(formatted_parameters)
     # output settings not covered
-
-    yaml_obj = yaml.dump(out_dict, default_flow_style=False)
-    return yaml_obj
+    return stages, formatted_parameters, input_settings
