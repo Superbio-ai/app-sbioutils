@@ -15,7 +15,10 @@ def _parse_input_python(file: BytesIO):
     click_flag = False
 
     for byte_line in byte_lines:
-        line = str(byte_line)[2:-1]
+        # example of str_line: 'b'import os\r\n''
+        str_line = str(byte_line)
+        line = str_line.replace("b'", "").replace("\\r", "").replace("\\n", "")[:-1]
+        # TODO add if line ends with coma - add next line to this line.
         # Strips the newline character
         line_array.append(line.strip())
         if any(tag in line for tag in argparse_tags):
@@ -33,7 +36,7 @@ def _parse_input_python(file: BytesIO):
         
 def _dict_from_args(filelines: List[str], library: str):
     if library == 'argparse':
-        arg_command = '.add_argument'
+        arg_command = '.add_argument('
     else:
         arg_command = '.option('
         
