@@ -96,10 +96,9 @@ default_template = {
     "dataStructure": ""
 }
 
-#if the below are present then use the relevant package
 argparse_tags = ['from argparse', 'import argparse', 'ArgumentParser']
 click_tags = ['from click', 'import click']
-allowed_types = ['str','int','float','path','boolean']
-allowed_args = ['type','default','tooltip','min_value','max_value','increment','user_defined','options','from_data','input_type']
-boolean_values = ['True','False','true','false',True,False]
-
+allowed_types = ['str', 'int', 'float', 'path', 'boolean']
+allowed_args = ['type', 'default', 'tooltip', 'min_value', 'max_value', 'increment', 'user_defined', 'options',
+                'from_data', 'input_type']
+boolean_values = ['True', 'False', 'true', 'false', True, False]
