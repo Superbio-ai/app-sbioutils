@@ -3,7 +3,7 @@ from typing import List
 
 import yaml
 from copy import deepcopy
-from .templates import csv_template, image_template, sc_template, standard_yaml_automation_prompt
+from .templates import csv_template, image_template, sc_template, standard_parameter_automation_prompt, standard_input_automation_prompt
 from .templates import argparse_tags, click_tags, allowed_types, allowed_args, boolean_values
 
 import openai
@@ -195,7 +195,13 @@ def openai_chat_completion(prompt, file_contents, MaxToken = 50, outputs = 1, te
         #lower values like 0.2=more random, higher values like 0.8=more focused and deterministic
         temperature = temperature
     )
-    response_text = response['choices'][0]['message']['content']
+    if outputs == 1:
+        response_text = response['choices'][0]['message']['content']
+    else:
+        response_text = []
+        for i in range(outputs):
+            response_text.append(response['choices'][i]['message']['content'])
+            
     return response_text
 
 
@@ -238,22 +244,43 @@ def input_yaml_from_args(parameters):
     return input_settings
 
 
+def validate_multiple_outputs(outputs):
+    checkpoint = 0
+    not_yaml = 0
+    valid_outputs = []
+    for out in outputs:
+        valid = True
+        if any(substring in out for substring in ['directory','Directory','checkpoint','Checkpoint']):
+            checkpoint+=1
+            valid = False
+        if not is_invalid_yaml(out):
+            not_yaml+=1
+            valid = False
+        if valid:
+            valid_outputs.append(out)
+    return(valid_outputs)
+
+
 def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method = 'new'):
-    parameters = {}
     
+    input_method = method
+    
+    #parameters
     if method == 'new':
         file_contents = _parse_multiple_files(file_list = files, verbose = False)
         try:
-            output = openai_chat_completion(standard_yaml_automation_prompt, file_contents, MaxToken = 4000, outputs = 1)
-            formatted_parameters = _parse_output(output)
+            parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, MaxToken = 4000, outputs = 1)
+            formatted_parameters = _parse_output(parameters)
+            
             if is_invalid_yaml(formatted_parameters):
-                raise ValueError('Invalid YAML format.')
+                raise ValueError('Invalid YAML format for parameters.')
         except Exception as err:
-            print(f'Error occurred: {err}')
+            print(f'Error occurred with parameter automation: {err}')
             #if chatgpt api does not work, then use old method
             method = 'old'
         
     if method == 'old':
+        parameters = {}
         library_found = False
         
         for file in files:
@@ -263,6 +290,22 @@ def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method
                 new_parameters = _dict_from_args(file_lines, argument_parsing_library)
                 parameters = {**parameters, **new_parameters}
         formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
+    
+    #input_settings being done separately incase one part of new pipeline works even when other fails
+    if input_method == 'new':
+        try:
+            #generating 10 outputs and picking first valid one if available
+            input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, MaxToken=400, outputs=10, temperature = 0.9)
+            valid_options = validate_multiple_outputs(input_options)
+            if len(valid_options)>0:
+                input_settings = valid_options[0]
+            else:
+                raise ValueError('Invalid YAML format for inputs.')
+        except Exception as err:
+            print(f'Error occurred with input setting automation: {err}')
+            #if chatgpt api does not work, then use old method
+            input_method = 'old'
+    if input_method == 'old':
         input_settings = input_yaml_from_args(formatted_parameters)
     
     stages = _stages_from_scripts(filenames)
