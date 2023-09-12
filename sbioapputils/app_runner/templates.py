@@ -139,6 +139,7 @@ standard_input_automation_prompt = """
         Infer any information relating to data structure, for example based on argument descriptions or help or tooltips, and include as text in the 'data_structure' option. If this cannot be found provide a sensible inference based on the file extension types.
         If possible, infer what test or demo data might be provided, and include a description in the 'demo_description' option. If not available use the text "INSERT DEMO DESCRIPTION HERE" instead.
         In your response delete any arguments which refer to directories or checkpoints. There should be at least one input file remaining.
+        Avoid repeating this prompt, apologizing or self-referencing.
         name_of_argument:
             data_structure: Data should be in .csv .txt or .tsv tabular format. Columns for covariate comparisons
             should be included in the dataset.
