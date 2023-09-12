@@ -3,8 +3,11 @@ from typing import List
 
 import yaml
 from copy import deepcopy
-from .templates import csv_template, image_template, sc_template
+from .templates import csv_template, image_template, sc_template, standard_yaml_automation_prompt
 from .templates import argparse_tags, click_tags, allowed_types, allowed_args, boolean_values
+
+import openai
+import re
 
 
 def _parse_input_python(file: BytesIO):
@@ -147,6 +150,68 @@ def _format_argparse_parameters(input_parameters):
     return parameters
 
 
+def _prune_script(script_text):
+    substrings = ["@click.option(", "parser.add_argument("]
+    new_text = ""
+    lines = list(set(script_text.splitlines()))
+
+    for line in lines:
+        if any(line.startswith(substring) for substring in substrings):
+            new_text += line + "\n"
+    
+    return new_text
+
+
+def _parse_input_python_v2(file_loc, verbose = False):
+    file = open(file_loc, 'r')
+    script_text = file.read()
+    stripped_script = _prune_script(script_text)
+    if verbose:
+        line_count1 = len(script_text.splitlines())
+        line_count2 = len(stripped_script.splitlines())
+        print(f"Length of full script is {line_count1}, and the stripped script is {line_count2}")
+    return stripped_script
+
+
+def _parse_multiple_files(file_list, verbose = False):
+    list_contents = []
+    for file in file_list:
+        list_contents.append(_parse_input_python_v2(file_loc = file, verbose = verbose))
+    delimiter = '\n'
+    result = delimiter.join(list_contents)
+    return result
+
+
+def openai_chat_completion(prompt, file_contents, MaxToken = 50, outputs = 1, temperature = 0.75, model = "gpt-4-0613"):
+    
+    messages = [{"role": "system", "content" : prompt}, {"role": "user", "content": file_contents}]
+    
+    response = openai.ChatCompletion.create(
+        model = model,
+        messages = messages,
+        max_tokens = MaxToken,
+        n = outputs,
+        #The range of the sampling temperature is 0 to 2.
+        #lower values like 0.2=more random, higher values like 0.8=more focused and deterministic
+        temperature = temperature
+    )
+    response_text = response['choices'][0]['message']['content']
+    return response_text
+
+
+def _parse_output(output):
+    matches = re.findall(r"```(.*?)```", output, re.DOTALL)
+    return(matches[0].replace('yaml',''))
+
+
+def is_invalid_yaml(text):
+    try:
+        yaml.safe_load(text)
+        return False
+    except yaml.YAMLError as exc:
+        return True
+    
+    
 def input_yaml_from_args(parameters):
     input_settings = {}
     for parameter_dict in parameters.values():
@@ -173,19 +238,34 @@ def input_yaml_from_args(parameters):
     return input_settings
 
 
-def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str]):
+def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method = 'new'):
     parameters = {}
-    library_found = False
     
-    for file in files:
-        file_lines, argument_parsing_library = _parse_input_python(file)
-        if argument_parsing_library is not None:
-            library_found = True
-            new_parameters = _dict_from_args(file_lines, argument_parsing_library)
-            parameters = {**parameters, **new_parameters}
-    formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
-
+    if method == 'new':
+        file_contents = _parse_multiple_files(file_list = files, verbose = False)
+        try:
+            output = openai_chat_completion(standard_yaml_automation_prompt, file_contents, MaxToken = 4000, outputs = 1)
+            formatted_parameters = _parse_output(output)
+            if is_invalid_yaml(formatted_parameters):
+                raise ValueError('Invalid YAML format.')
+        except Exception as err:
+            print(f'Error occurred: {err}')
+            #if chatgpt api does not work, then use old method
+            method = 'old'
+        
+    if method == 'old':
+        library_found = False
+        
+        for file in files:
+            file_lines, argument_parsing_library = _parse_input_python(file)
+            if argument_parsing_library is not None:
+                library_found = True
+                new_parameters = _dict_from_args(file_lines, argument_parsing_library)
+                parameters = {**parameters, **new_parameters}
+        formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
+        input_settings = input_yaml_from_args(formatted_parameters)
+    
     stages = _stages_from_scripts(filenames)
-    input_settings = input_yaml_from_args(formatted_parameters)
+    
     # output settings not covered
-    return stages, formatted_parameters, input_settings
+    return stages, formatted_parameters, input_settings, method

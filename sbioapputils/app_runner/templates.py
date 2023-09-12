@@ -102,3 +102,29 @@ allowed_types = ['str', 'int', 'float', 'path', 'boolean']
 allowed_args = ['type', 'default', 'tooltip', 'min_value', 'max_value', 'increment', 'user_defined', 'options',
                 'from_data', 'input_type']
 boolean_values = ['True', 'False', 'true', 'false', True, False]
+
+standard_yaml_automation_prompt = """Can you list all the arguments and options in this script?
+            For numeric arguments, please infer reasonable min, max and increment values. The max should be at most 1000 times the min and should not be None.
+            For arguments without defaults, please infer reasonable defaults.
+            For arguments without type, please infer the likely type.
+            Please provide this as a YAML configuration file.
+            Add the option 'input_type' as 'slider' for numeric, 'dropdown' for string, 'checkbox' for Boolean.
+            Rename 'help' or similar options as 'tooltip'.
+            If possible dropdown values are included in tooltips then include these as another option called "options" with the possible values provided in an array.
+            Remove any arguments which are related to hardware configuration.
+            Below are two examples of what an argument should look like:
+            ndf:
+              type: int
+              help: Number of discriminator filters in the first convolutional layer.
+              input_type: slider
+              default: 64
+              min: 16
+              max: 512
+              increment: 16
+            init-type:
+              type: str
+              tooltip: 'network initialization [normal | xavier | kaiming | orthogonal]'
+              input_type: dropdown
+              options: ['normal','xavier','kaiming','orthogonal']
+              default: 'normal'  
+            """
