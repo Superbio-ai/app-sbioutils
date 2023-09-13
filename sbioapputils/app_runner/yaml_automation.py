@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import List
+from typing import List, Optional
 
 import yaml
 from copy import deepcopy
@@ -73,7 +73,7 @@ def _stages_from_scripts(filenames):
     for file in filenames:
         file_name = file.split('/')[-1].split('.py')[0]
         stages[file_name] = {'file': file}
-    return stages
+    return json_to_yaml(stages)
 
 
 def _is_float(string):
@@ -240,7 +240,7 @@ def substring_parse_inputs(parameters):
                     input_template = sc_template.copy()
                     input_settings[filename] = input_template
 
-    return input_settings
+    return json_to_yaml(input_settings)
 
 
 def validate_multiple_outputs(outputs):
@@ -282,6 +282,10 @@ def chatgpt_parse_inputs(file_contents):
     return input_settings
 
 
+def json_to_yaml(json_value: Optional[dict]) -> str:
+    return yaml.dump(json_value) if json_value else '\n'
+
+
 def substring_parse_parameters(files):
     parameters = {}
     library_found = False
@@ -293,10 +297,10 @@ def substring_parse_parameters(files):
             new_parameters = _dict_from_args(file_lines, argument_parsing_library)
             parameters = {**parameters, **new_parameters}
     formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
-    return formatted_parameters
+    return json_to_yaml(formatted_parameters)
 
     
-def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse'):
+def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse') -> (str, str, str):
     if method == 'chatgpt_parse':
         file_contents = _parse_multiple_files(file_list=files, verbose=False)
         try:
