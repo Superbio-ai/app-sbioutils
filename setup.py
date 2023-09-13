@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
       name="sbioapputils",
-      version="1.0.22",
+      version="1.0.23",
       description="Superbio app runner utils",
       author="Superbio AI",
       author_email="smorgan@superbio.ai",
