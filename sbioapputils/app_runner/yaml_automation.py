@@ -164,7 +164,6 @@ def _prune_script(script_text):
 
 
 def _parse_input_python_v2(file: BytesIO, verbose: bool = False):
-    
     script_text = file.getvalue().decode('ASCII')
     stripped_script = _prune_script(script_text)
     if verbose:
@@ -177,23 +176,21 @@ def _parse_input_python_v2(file: BytesIO, verbose: bool = False):
 def _parse_multiple_files(file_list, verbose=False):
     list_contents = []
     for file in file_list:
-        list_contents.append(_parse_input_python_v2(file_loc=file, verbose=verbose))
+        list_contents.append(_parse_input_python_v2(file, verbose))
     delimiter = '\n'
     result = delimiter.join(list_contents)
     return result
 
 
 def openai_chat_completion(prompt, file_contents, max_token=50, outputs=1, temperature=0.75, model="gpt-4-0613"):
-    
     messages = [{"role": "system", "content": prompt}, {"role": "user", "content": file_contents}]
-    
     response = openai.ChatCompletion.create(
         model=model,
         messages=messages,
         max_tokens=max_token,
         n=outputs,
-        #The range of the sampling temperature is 0 to 2.
-        #lower values like 0.2=more random, higher values like 0.8=more focused and deterministic
+        # The range of the sampling temperature is 0 to 2.
+        # lower values like 0.2=more random, higher values like 0.8=more focused and deterministic
         temperature=temperature
     )
     if outputs == 1:
@@ -206,8 +203,8 @@ def openai_chat_completion(prompt, file_contents, max_token=50, outputs=1, tempe
     return response_text
 
 
-#sometimes chatgpt returns yaml+an explanation of the yaml above and below. This keeps only the yaml
 def _extract_yaml(output):
+    # sometimes chatgpt returns yaml+an explanation of the yaml above and below. This keeps only the yaml
     matches = re.findall(r"```(.*?)```", output, re.DOTALL)
     return matches[0].replace('yaml', '')
 
@@ -252,7 +249,7 @@ def validate_multiple_outputs(outputs):
     valid_outputs = []
     for output in outputs:
         valid = True
-        #check has not returned directories or checkpoints as input files
+        # check has not returned directories or checkpoints as input files
         if any(substring in output for substring in ['directory', 'Directory', 'checkpoint', 'Checkpoint']):
             checkpoint += 1
             valid = False
@@ -265,23 +262,25 @@ def validate_multiple_outputs(outputs):
 
 
 def chatgpt_parse_parameters(file_contents):
+    openai_key = environ.get("OPENAI_KEY")
     openai.api_key = environ.get("OPENAI_KEY")
     parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=4000, outputs=1)
     formatted_parameters = _extract_yaml(parameters)
     if is_invalid_yaml(formatted_parameters):
         raise ValueError('Invalid YAML format for parameters.')
-    return(formatted_parameters)
+    return formatted_parameters
     
 
 def chatgpt_parse_inputs(file_contents):
     openai.api_key = environ.get("OPENAI_KEY")
-    input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, max_token=400, outputs=10, temperature=0.9)
+    input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, max_token=400,
+                                           outputs=10, temperature=0.9)
     valid_options = validate_multiple_outputs(input_options)
     if len(valid_options)>0:
         input_settings = valid_options[0]
     else:
         raise ValueError('Invalid YAML format for inputs.')
-    return(input_settings)
+    return input_settings
 
 
 def substring_parse_parameters(files):
@@ -295,12 +294,10 @@ def substring_parse_parameters(files):
             new_parameters = _dict_from_args(file_lines, argument_parsing_library)
             parameters = {**parameters, **new_parameters}
     formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
-    return(formatted_parameters)
+    return formatted_parameters
 
     
-def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse'):
-    
-    #parameters
+def  parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse'):
     if method == 'chatgpt_parse':
         file_contents = _parse_multiple_files(file_list=files, verbose=False)
         try:
