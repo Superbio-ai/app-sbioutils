@@ -3,6 +3,9 @@ from typing import List, Optional, Union
 
 import yaml
 from copy import deepcopy
+
+from yaml import SafeLoader
+
 from .templates import csv_template, image_template, sc_template, standard_parameter_automation_prompt, standard_input_automation_prompt
 from .templates import argparse_tags, click_tags, allowed_types, allowed_args, boolean_values
 
@@ -223,7 +226,8 @@ def is_invalid_yaml(text):
         return True
     
     
-def substring_parse_inputs(parameters):
+def substring_parse_inputs(parameters_yaml: str) -> str:
+    parameters = yaml_to_json(parameters_yaml)
     input_settings = {}
     # AttributeError: 'str' object has no attribute 'values'
     for parameter_dict in parameters.values():
@@ -293,7 +297,12 @@ def json_to_yaml(json_value: Optional[dict]) -> str:
     return yaml.dump(json_value) if json_value else '\n'
 
 
-def substring_parse_parameters(files):
+def yaml_to_json(str_value: str) -> Optional[dict]:
+    dict_value = yaml.load(str_value, Loader=SafeLoader) if str_value else None
+    return dict_value
+
+
+def substring_parse_parameters(files) -> str:
     parameters = {}
     library_found = False
     
