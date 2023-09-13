@@ -163,8 +163,8 @@ def _prune_script(script_text):
     return new_text
 
 
-def _parse_input_python_v2(file_loc, verbose=False):
-    file = open(file_loc, 'r')
+def _parse_input_python_v2(file: BytesIO, verbose: bool = False):
+    
     script_text = file.read()
     stripped_script = _prune_script(script_text)
     if verbose:
