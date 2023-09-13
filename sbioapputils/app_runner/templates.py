@@ -112,7 +112,6 @@ standard_parameter_automation_prompt = """Can you list all the arguments and opt
             Rename 'help' or similar options as 'tooltip'.
             If possible dropdown values are included in tooltips then include these as another option called "options" with the possible values provided in an array.
             Remove any arguments which are related to hardware configuration.
-            Do not return any text except for the yaml itself, I will be taking your output and parsing it.
             Below are two examples of what an argument should look like:
             ndf:
               type: int

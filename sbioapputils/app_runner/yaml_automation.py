@@ -225,6 +225,7 @@ def is_invalid_yaml(text):
     
 def substring_parse_inputs(parameters):
     input_settings = {}
+    # AttributeError: 'str' object has no attribute 'values'
     for parameter_dict in parameters.values():
         if not all(k in parameter_dict.keys() for k in ("type", "default")):
             continue
