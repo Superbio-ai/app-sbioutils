@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import yaml
 from copy import deepcopy
@@ -9,6 +9,10 @@ from .templates import argparse_tags, click_tags, allowed_types, allowed_args, b
 import openai
 import re
 from os import environ
+
+
+PARSE_WITH_CHATGPT_MODE = 'chatgpt_parse'
+PARSE_MANUALLY_MODE = 'substring_parse'
 
 
 def _parse_input_python(file: BytesIO):
@@ -300,8 +304,10 @@ def substring_parse_parameters(files):
     return json_to_yaml(formatted_parameters)
 
     
-def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse') -> (str, str, str):
-    if method == 'chatgpt_parse':
+def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str],
+                              method: Union[PARSE_WITH_CHATGPT_MODE, PARSE_MANUALLY_MODE]=PARSE_WITH_CHATGPT_MODE) \
+        -> (str, str, str):
+    if method == PARSE_WITH_CHATGPT_MODE:
         file_contents = _parse_multiple_files(file_list=files, verbose=False)
         try:
             formatted_parameters = chatgpt_parse_parameters(file_contents)    
@@ -312,7 +318,7 @@ def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method
         except:
             input_settings = substring_parse_inputs(formatted_parameters)
         
-    elif method == 'substring_parse':
+    elif method == PARSE_MANUALLY_MODE:
         formatted_parameters = substring_parse_parameters(files)
         input_settings = substring_parse_inputs(formatted_parameters)
     
