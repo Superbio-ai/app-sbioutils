@@ -162,7 +162,7 @@ def _prune_script(script_text):
     return new_text
 
 
-def _parse_input_python_v2(file_loc, verbose = False):
+def _parse_input_python_v2(file_loc, verbose=False):
     file = open(file_loc, 'r')
     script_text = file.read()
     stripped_script = _prune_script(script_text)
@@ -173,23 +173,23 @@ def _parse_input_python_v2(file_loc, verbose = False):
     return stripped_script
 
 
-def _parse_multiple_files(file_list, verbose = False):
+def _parse_multiple_files(file_list, verbose=False):
     list_contents = []
     for file in file_list:
-        list_contents.append(_parse_input_python_v2(file_loc = file, verbose = verbose))
+        list_contents.append(_parse_input_python_v2(file_loc=file, verbose=verbose))
     delimiter = '\n'
     result = delimiter.join(list_contents)
     return result
 
 
-def openai_chat_completion(prompt, file_contents, MaxToken = 50, outputs = 1, temperature = 0.75, model = "gpt-4-0613"):
+def openai_chat_completion(prompt, file_contents, max_token=50, outputs=1, temperature=0.75, model="gpt-4-0613"):
     
     messages = [{"role": "system", "content" : prompt}, {"role": "user", "content": file_contents}]
     
     response = openai.ChatCompletion.create(
         model = model,
         messages = messages,
-        max_tokens = MaxToken,
+        max_tokens = max_token,
         n = outputs,
         #The range of the sampling temperature is 0 to 2.
         #lower values like 0.2=more random, higher values like 0.8=more focused and deterministic
@@ -261,15 +261,15 @@ def validate_multiple_outputs(outputs):
     return(valid_outputs)
 
 
-def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method = 'new'):
+def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse'):
     
     input_method = method
     
     #parameters
-    if method == 'new':
-        file_contents = _parse_multiple_files(file_list = files, verbose = False)
+    if method == 'chatgpt_parse':
+        file_contents = _parse_multiple_files(file_list=files, verbose=False)
         try:
-            parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, MaxToken = 4000, outputs = 1)
+            parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=4000, outputs=1)
             formatted_parameters = _parse_output(parameters)
             
             if is_invalid_yaml(formatted_parameters):
@@ -277,9 +277,9 @@ def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method
         except Exception as err:
             print(f'Error occurred with parameter automation: {err}')
             #if chatgpt api does not work, then use old method
-            method = 'old'
+            method = 'substring_parse'
         
-    if method == 'old':
+    if method == 'substring_parse':
         parameters = {}
         library_found = False
         
@@ -292,10 +292,10 @@ def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method
         formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
     
     #input_settings being done separately incase one part of new pipeline works even when other fails
-    if input_method == 'new':
+    if input_method == 'chatgpt_parse':
         try:
             #generating 10 outputs and picking first valid one if available
-            input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, MaxToken=400, outputs=10, temperature = 0.9)
+            input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, max_token=400, outputs=10, temperature=0.9)
             valid_options = validate_multiple_outputs(input_options)
             if len(valid_options)>0:
                 input_settings = valid_options[0]
@@ -304,8 +304,8 @@ def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method
         except Exception as err:
             print(f'Error occurred with input setting automation: {err}')
             #if chatgpt api does not work, then use old method
-            input_method = 'old'
-    if input_method == 'old':
+            input_method = 'substring_parse'
+    if input_method == 'substring_parse':
         input_settings = input_yaml_from_args(formatted_parameters)
     
     stages = _stages_from_scripts(filenames)
