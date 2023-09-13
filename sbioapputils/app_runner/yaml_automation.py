@@ -3,8 +3,12 @@ from typing import List
 
 import yaml
 from copy import deepcopy
-from .templates import csv_template, image_template, sc_template
+from .templates import csv_template, image_template, sc_template, standard_parameter_automation_prompt, standard_input_automation_prompt
 from .templates import argparse_tags, click_tags, allowed_types, allowed_args, boolean_values
+
+import openai
+import re
+from os import environ
 
 
 def _parse_input_python(file: BytesIO):
@@ -147,7 +151,76 @@ def _format_argparse_parameters(input_parameters):
     return parameters
 
 
-def input_yaml_from_args(parameters):
+def _prune_script(script_text):
+    substrings = ["@click.option(", "parser.add_argument("]
+    new_text = ""
+    lines = list(set(script_text.splitlines()))
+
+    for line in lines:
+        if any(line.startswith(substring) for substring in substrings):
+            new_text += line + "\n"
+    
+    return new_text
+
+
+def _parse_input_python_v2(file: BytesIO, verbose: bool = False):
+    
+    script_text = file.getvalue().decode('ASCII')
+    stripped_script = _prune_script(script_text)
+    if verbose:
+        line_count1 = len(script_text.splitlines())
+        line_count2 = len(stripped_script.splitlines())
+        print(f"Length of full script is {line_count1}, and the stripped script is {line_count2}")
+    return stripped_script
+
+
+def _parse_multiple_files(file_list, verbose=False):
+    list_contents = []
+    for file in file_list:
+        list_contents.append(_parse_input_python_v2(file_loc=file, verbose=verbose))
+    delimiter = '\n'
+    result = delimiter.join(list_contents)
+    return result
+
+
+def openai_chat_completion(prompt, file_contents, max_token=50, outputs=1, temperature=0.75, model="gpt-4-0613"):
+    
+    messages = [{"role": "system", "content": prompt}, {"role": "user", "content": file_contents}]
+    
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=messages,
+        max_tokens=max_token,
+        n=outputs,
+        #The range of the sampling temperature is 0 to 2.
+        #lower values like 0.2=more random, higher values like 0.8=more focused and deterministic
+        temperature=temperature
+    )
+    if outputs == 1:
+        response_text = response['choices'][0]['message']['content']
+    else:
+        response_text = []
+        for i in range(outputs):
+            response_text.append(response['choices'][i]['message']['content'])
+            
+    return response_text
+
+
+#sometimes chatgpt returns yaml+an explanation of the yaml above and below. This keeps only the yaml
+def _extract_yaml(output):
+    matches = re.findall(r"```(.*?)```", output, re.DOTALL)
+    return matches[0].replace('yaml', '')
+
+
+def is_invalid_yaml(text):
+    try:
+        yaml.safe_load(text)
+        return False
+    except yaml.YAMLError as exc:
+        return True
+    
+    
+def substring_parse_inputs(parameters):
     input_settings = {}
     for parameter_dict in parameters.values():
         if not all(k in parameter_dict.keys() for k in ("type", "default")):
@@ -173,7 +246,45 @@ def input_yaml_from_args(parameters):
     return input_settings
 
 
-def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str]):
+def validate_multiple_outputs(outputs):
+    checkpoint = 0
+    not_yaml = 0
+    valid_outputs = []
+    for output in outputs:
+        valid = True
+        #check has not returned directories or checkpoints as input files
+        if any(substring in output for substring in ['directory', 'Directory', 'checkpoint', 'Checkpoint']):
+            checkpoint += 1
+            valid = False
+        if not is_invalid_yaml(output):
+            not_yaml += 1
+            valid = False
+        if valid:
+            valid_outputs.append(output)
+    return valid_outputs
+
+
+def chatgpt_parse_parameters(file_contents):
+    openai.api_key = environ.get("OPENAI_KEY")
+    parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=4000, outputs=1)
+    formatted_parameters = _extract_yaml(parameters)
+    if is_invalid_yaml(formatted_parameters):
+        raise ValueError('Invalid YAML format for parameters.')
+    return(formatted_parameters)
+    
+
+def chatgpt_parse_inputs(file_contents):
+    openai.api_key = environ.get("OPENAI_KEY")
+    input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, max_token=400, outputs=10, temperature=0.9)
+    valid_options = validate_multiple_outputs(input_options)
+    if len(valid_options)>0:
+        input_settings = valid_options[0]
+    else:
+        raise ValueError('Invalid YAML format for inputs.')
+    return(input_settings)
+
+
+def substring_parse_parameters(files):
     parameters = {}
     library_found = False
     
@@ -184,8 +295,28 @@ def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str]):
             new_parameters = _dict_from_args(file_lines, argument_parsing_library)
             parameters = {**parameters, **new_parameters}
     formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
+    return(formatted_parameters)
 
+    
+def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse'):
+    
+    #parameters
+    if method == 'chatgpt_parse':
+        file_contents = _parse_multiple_files(file_list=files, verbose=False)
+        try:
+            formatted_parameters = chatgpt_parse_parameters(file_contents)    
+        except:
+            formatted_parameters = substring_parse_parameters(files)
+        try:
+            input_settings = chatgpt_parse_inputs(file_contents)
+        except:
+            input_settings = substring_parse_inputs(formatted_parameters)
+        
+    elif method == 'substring_parse':
+        formatted_parameters = substring_parse_parameters(files)
+        input_settings = substring_parse_inputs(formatted_parameters)
+    
     stages = _stages_from_scripts(filenames)
-    input_settings = input_yaml_from_args(formatted_parameters)
+    
     # output settings not covered
-    return stages, formatted_parameters, input_settings
+    return stages, formatted_parameters, input_settings, method
