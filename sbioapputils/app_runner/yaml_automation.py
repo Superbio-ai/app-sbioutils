@@ -317,7 +317,7 @@ def substring_parse_parameters(files) -> str:
 
     
 def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str],
-                              method: Union[PARSE_WITH_CHATGPT_MODE, PARSE_MANUALLY_MODE]=PARSE_WITH_CHATGPT_MODE) \
+                              method: Union[PARSE_WITH_CHATGPT_MODE, PARSE_MANUALLY_MODE] = PARSE_WITH_CHATGPT_MODE) \
         -> (str, str, str):
     if method == PARSE_WITH_CHATGPT_MODE:
         file_contents = _parse_multiple_files(file_list=files, verbose=False)
