@@ -210,7 +210,9 @@ def openai_chat_completion(prompt, file_contents, max_token=50, outputs=1, tempe
 def _extract_yaml(output):
     # sometimes chatgpt returns yaml+an explanation of the yaml above and below. This keeps only the yaml
     matches = re.findall(r"```(.*?)```", output, re.DOTALL)
-    return matches[0].replace('yaml', '')
+    if matches:
+        return matches[0].replace('yaml', '')
+    return output
 
 
 def is_invalid_yaml(text):
@@ -311,7 +313,7 @@ def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str],
         file_contents = _parse_multiple_files(file_list=files, verbose=False)
         try:
             formatted_parameters = chatgpt_parse_parameters(file_contents)    
-        except:
+        except Exception as e:
             formatted_parameters = substring_parse_parameters(files)
         try:
             input_settings = chatgpt_parse_inputs(file_contents)
