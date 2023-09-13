@@ -8,6 +8,7 @@ from .templates import argparse_tags, click_tags, allowed_types, allowed_args, b
 
 import openai
 import re
+from os import environ
 
 
 def _parse_input_python(file: BytesIO):
@@ -262,11 +263,12 @@ def validate_multiple_outputs(outputs):
 
 
 def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse'):
-    
+
     input_method = method
     
     #parameters
     if method == 'chatgpt_parse':
+        openai.api_key = environ.get("OPENAI_KEY")
         file_contents = _parse_multiple_files(file_list=files, verbose=False)
         try:
             parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=4000, outputs=1)
@@ -293,6 +295,7 @@ def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method
     
     #input_settings being done separately incase one part of new pipeline works even when other fails
     if input_method == 'chatgpt_parse':
+        openai.api_key = environ.get("OPENAI_KEY")
         try:
             #generating 10 outputs and picking first valid one if available
             input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, max_token=400, outputs=10, temperature=0.9)
