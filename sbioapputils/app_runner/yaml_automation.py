@@ -165,7 +165,7 @@ def _prune_script(script_text):
 
 def _parse_input_python_v2(file: BytesIO, verbose: bool = False):
     
-    script_text = file.read()
+    script_text = file.getvalue().decode('ASCII')
     stripped_script = _prune_script(script_text)
     if verbose:
         line_count1 = len(script_text.splitlines())
