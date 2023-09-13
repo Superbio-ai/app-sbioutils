@@ -262,7 +262,6 @@ def validate_multiple_outputs(outputs):
 
 
 def chatgpt_parse_parameters(file_contents):
-    openai_key = environ.get("OPENAI_KEY")
     openai.api_key = environ.get("OPENAI_KEY")
     parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=4000, outputs=1)
     formatted_parameters = _extract_yaml(parameters)
@@ -276,7 +275,7 @@ def chatgpt_parse_inputs(file_contents):
     input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, max_token=400,
                                            outputs=10, temperature=0.9)
     valid_options = validate_multiple_outputs(input_options)
-    if len(valid_options)>0:
+    if len(valid_options) > 0:
         input_settings = valid_options[0]
     else:
         raise ValueError('Invalid YAML format for inputs.')
@@ -297,7 +296,7 @@ def substring_parse_parameters(files):
     return formatted_parameters
 
     
-def  parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse'):
+def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], method='chatgpt_parse'):
     if method == 'chatgpt_parse':
         file_contents = _parse_multiple_files(file_list=files, verbose=False)
         try:
@@ -316,4 +315,4 @@ def  parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], metho
     stages = _stages_from_scripts(filenames)
     
     # output settings not covered
-    return stages, formatted_parameters, input_settings, method
+    return stages, formatted_parameters, input_settings
