@@ -157,7 +157,7 @@ def _prune_script(script_text):
     lines = list(set(script_text.splitlines()))
 
     for line in lines:
-        if any(line.startswith(substring) for substring in substrings):
+        if any(line.find(substring)>=0 for substring in substrings):
             new_text += line + "\n"
     
     return new_text
@@ -267,10 +267,14 @@ def validate_multiple_outputs(outputs):
 def chatgpt_parse_parameters(file_contents):
     openai.api_key = environ.get("OPENAI_KEY")
     parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=4000, outputs=1)
-    formatted_parameters = _extract_yaml(parameters)
-    if is_invalid_yaml(formatted_parameters):
-        raise ValueError('Invalid YAML format for parameters.')
-    return(formatted_parameters)
+    if is_invalid_yaml(parameters):
+        formatted_parameters = _extract_yaml(parameters)
+        if is_invalid_yaml(formatted_parameters):
+            raise ValueError('Invalid YAML format for parameters.')
+        else:
+            return(formatted_parameters)
+    else:
+        return parameters
     
 
 def chatgpt_parse_inputs(file_contents):
