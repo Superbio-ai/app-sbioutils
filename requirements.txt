@@ -7,6 +7,7 @@ scanpy>=1.9.1
 numpy>=1.21
 requests>=2.22.0
 boto3>=1.21.27
+wrapt-timeout-decorator
 
 # fix matplotlib version to overcome the TypeError: metaclass conflict
 # info here https://discourse.scverse.org/t/metaclass-conflict-from-trying-to-import-scanpy/1133

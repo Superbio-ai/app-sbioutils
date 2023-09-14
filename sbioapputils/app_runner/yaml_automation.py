@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 import yaml
 from copy import deepcopy
 
+from wrapt_timeout_decorator import timeout
 from yaml import SafeLoader
 
 from .templates import csv_template, image_template, sc_template, standard_parameter_automation_prompt, standard_input_automation_prompt
@@ -189,6 +190,7 @@ def _parse_multiple_files(file_list, verbose=False):
     return result
 
 
+@timeout(5)
 def openai_chat_completion(prompt, file_contents, max_token=50, outputs=1, temperature=0.75, model="gpt-4-0613"):
     messages = [{"role": "system", "content": prompt}, {"role": "user", "content": file_contents}]
     response = openai.ChatCompletion.create(
