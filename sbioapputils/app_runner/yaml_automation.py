@@ -290,7 +290,7 @@ def chatgpt_parse_parameters(file_contents):
         if is_invalid_yaml(pruned_yaml):
             raise ValueError('Invalid YAML format for parameters.')
         else:
-            return(pruned_yaml)
+            return pruned_yaml
     else:
         pruned_yaml = _prune_yaml(parameters, MAX_PARAMETERS)
         return pruned_yaml
