@@ -132,7 +132,7 @@ standard_parameter_automation_prompt = """Can you list all the arguments and opt
             """
 
 standard_input_automation_prompt = """
-lease create a YAML configuration file based on my instructions. 
+Please create a YAML configuration file based on my instructions. 
 
 INSTRUCTIONS:
 1. Based on the arguments in this script, make an inference about what files are needed
