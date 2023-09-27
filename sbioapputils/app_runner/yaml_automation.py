@@ -278,7 +278,7 @@ def _prune_yaml(yaml_str: str, count: int):
     top_keys = list(data.keys())[:count]
     new_data = {key: data[key] for key in top_keys}
     pruned_yaml = yaml.dump(new_data, default_flow_style=False, explicit_start=True)
-    return(pruned_yaml)
+    return pruned_yaml
 
 
 def chatgpt_parse_parameters(file_contents):
