@@ -7,7 +7,7 @@ from copy import deepcopy
 from yaml import SafeLoader
 
 from .templates import csv_template, image_template, sc_template, standard_parameter_automation_prompt, standard_input_automation_prompt
-from .templates import argparse_tags, click_tags, allowed_types, allowed_args, boolean_values
+from .templates import argparse_tags, click_tags, allowed_types, allowed_args, boolean_values, MAX_PARAMETERS, MAX_INPUTS
 
 import openai
 import re
@@ -272,26 +272,37 @@ def validate_multiple_outputs(outputs):
     return valid_outputs
 
 
+#input is a multiline string, formatted as yaml
+def _prune_yaml(yaml_str: str, count: int):
+    data = yaml.safe_load(yaml_str)
+    top_keys = list(data.keys())[:count]
+    new_data = {key: data[key] for key in top_keys}
+    pruned_yaml = yaml.dump(new_data, default_flow_style=False, explicit_start=True)
+    return(pruned_yaml)
+
+
 def chatgpt_parse_parameters(file_contents):
     openai.api_key = environ.get("OPENAI_KEY")
-    parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=4000, outputs=1)
+    parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
     if is_invalid_yaml(parameters):
         formatted_parameters = _extract_yaml(parameters)
-        if is_invalid_yaml(formatted_parameters):
+        pruned_yaml = _prune_yaml(formatted_parameters, MAX_PARAMETERS)
+        if is_invalid_yaml(pruned_yaml):
             raise ValueError('Invalid YAML format for parameters.')
         else:
-            return(formatted_parameters)
+            return(pruned_yaml)
     else:
-        return parameters
+        pruned_yaml = _prune_yaml(parameters, MAX_PARAMETERS)
+        return pruned_yaml
     
 
 def chatgpt_parse_inputs(file_contents):
     openai.api_key = environ.get("OPENAI_KEY")
-    input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, max_token=400,
+    input_options = openai_chat_completion(standard_input_automation_prompt, file_contents, max_token=300,
                                            outputs=10, temperature=0.9)
     valid_options = validate_multiple_outputs(input_options)
     if len(valid_options) > 0:
-        input_settings = valid_options[0]
+        input_settings = _prune_yaml(valid_options[0], MAX_INPUTS)
     else:
         raise ValueError('Invalid YAML format for inputs.')
     return input_settings
