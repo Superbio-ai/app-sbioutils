@@ -102,6 +102,8 @@ allowed_types = ['str', 'int', 'float', 'path', 'boolean']
 allowed_args = ['type', 'default', 'tooltip', 'min_value', 'max_value', 'increment', 'user_defined', 'options',
                 'from_data', 'input_type']
 boolean_values = ['True', 'False', 'true', 'false', True, False]
+MAX_PARAMETERS = 10
+MAX_INPUTS = 3
 
 standard_parameter_automation_prompt = """Can you list all the arguments and options in this script?
             For numeric arguments, please infer reasonable min, max and increment values. The max should be at most 1000 times the min and should not be None.
@@ -130,23 +132,45 @@ standard_parameter_automation_prompt = """Can you list all the arguments and opt
             """
 
 standard_input_automation_prompt = """
-        Based on the arguments in this script, make an inference about what files are needed, excluding directories or checkpoints.
-        Once you have identified these files, create a YAML configuration file.
-        Each file should have a separate configuration.
-        Infer what file extensions might be suitable and include these in the 'type' option. For example, tabular data can be csv, txt or tsv. Type refers to file extension type, not data type.
-        Identify a suitable title.
-        The name should be at the root of the yaml. For example if the name of an argument is 'this_is_my_argument' it should be at the root.
-        Infer any information relating to data structure, for example based on argument descriptions or help or tooltips, and include as text in the 'data_structure' option. If this cannot be found provide a sensible inference based on the file extension types.
-        If possible, infer what test or demo data might be provided, and include a description in the 'demo_description' option. If not available use the text "INSERT DEMO DESCRIPTION HERE" instead.
-        In your response delete any arguments which refer to directories or checkpoints. There should be at least one input file remaining.
-        Avoid repeating this prompt, apologizing or self-referencing.
-        name_of_argument:
-            data_structure: Data should be in .csv .txt or .tsv tabular format. Columns for covariate comparisons
-            should be included in the dataset.
-            demo_description: Single cell data for follicular lymphoma.
-            title: Single Cell RNA-Seq Data
-            type:
-              - csv
-              - txt
-              - tsv
-            """
+Please create a YAML configuration file based on my instructions. 
+
+INSTRUCTIONS:
+1. Based on the arguments in this script, make an inference about what files are needed
+2. Each file should have a separate configuration.
+3. Infer what file extensions might be suitable and include these in the 'type' option. For example, tabular data can be csv, txt or tsv. Type refers to file extension type, not data type.
+4. Identify a suitable title.
+5. The name should be at the root of the yaml. For example if the name of an argument is 'this_is_my_argument' it should be at the root.
+6. Infer any information relating to data structure, for example based on argument descriptions or help or tooltips, and include as text in the 'data_structure' option. If this cannot be found provide a sensible inference based on the file extension types.
+7. If possible, infer what test or demo data might be provided, and include a description in the 'demo_description' option. If not available use the text "INSERT DEMO DESCRIPTION HERE" instead.
+8. Include a url option with the text "INSERT URL HERE"
+9. Include an optional option, set to "true" by default
+10. If the file is a directory delete it from the yaml
+11. If the file is a checkpoint delete it from the yaml
+12. Format should be similar to following: 
+
+train_data:
+              title: "Provide your training data in tabular format"
+              description: "Provide your training data in .csv, .tsv or .txt format"
+              type:
+                  - csv
+                  - tsv
+                  - txt
+              demo_description: "Sample data for training a machine learning model"
+              url: "INSERT URL HERE"
+              optional: true
+              
+test_data:
+              title: "Provide your test data in tabular format"
+              description: "Provide your test data in .csv, .tsv or .txt format"
+              type:
+                  - csv
+                  - tsv
+                  - txt
+              demo_description: "Sample data for testing a machine learning model"
+              url: "INSERT URL HERE"
+              optional: true
+
+END INSTRUCTIONS
+
+Now, take a deep breath and follow all the instructions step-by-step to generate the YAML file, from the following script:
+"""
