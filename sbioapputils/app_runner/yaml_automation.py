@@ -274,18 +274,16 @@ def substring_parse_inputs(parameters_yaml: str) -> str:
 
 
 def validate_multiple_outputs(outputs):
-    checkpoint = 0
-    not_yaml = 0
     valid_outputs = []
     for output in outputs:
         valid = True
         # check has not returned directories or checkpoints as input files
         if any(substring in output for substring in ['directory', 'Directory', 'checkpoint', 'Checkpoint']):
-            checkpoint += 1
             valid = False
-        if not is_invalid_yaml(output):
-            not_yaml += 1
-            valid = False
+        if is_invalid_yaml(output):
+            output = _extract_yaml(output)
+            if is_invalid_yaml(output):    
+                valid = False
         if valid:
             valid_outputs.append(output)
     return valid_outputs
@@ -343,6 +341,7 @@ def substring_parse_parameters(files) -> str:
     parameters = {}
     library_found = False
     
+    for file in files:
         file_lines, argument_parsing_library = _parse_input_python(file)
         if argument_parsing_library is not None:
             library_found = True
