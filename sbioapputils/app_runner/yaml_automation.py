@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from yaml import SafeLoader
 
-from .templates import csv_template, image_template, sc_template, standard_parameter_automation_prompt, standard_input_automation_prompt
+from .templates import csv_template, image_template, sc_template, standard_parameter_automation_prompt, standard_input_automation_prompt, jupyter_parameter_automation_prompt
 from .templates import argparse_tags, click_tags, allowed_types, allowed_args, boolean_values, MAX_PARAMETERS, MAX_INPUTS
 
 import openai
@@ -170,9 +170,28 @@ def _prune_script(script_text):
     return new_text
 
 
-def _parse_input_python_v2(file: BytesIO, verbose: bool = False):
+def _prune_jupyter(script_text):
+    startstrings = ["#","'''","import","from"]
+    endstrings = ["'''"]
+    substrings = ["print","ipython"]
+    keep = ["="] #,"def ","class "]
+    new_text = ""
+    lines = list(set(script_text.splitlines()))
+    for line in lines:
+        if not any(line.lstrip().startswith(substring) for substring in startstrings):
+            if not any(line.rstrip().endswith(substring) for substring in endstrings):
+                if not any(substring in line for substring in substrings):
+                    if any(substring in line for substring in keep):
+                        new_text += line + "\n"
+    return(new_text)
+
+
+def _parse_input_python_v2(file: BytesIO, file_type: str = 'py', verbose: bool = False):
     script_text = file.getvalue().decode('ASCII')
-    stripped_script = _prune_script(script_text)
+    if file_type=='py':
+        stripped_script = _prune_script(script_text)
+    elif file_type=='ipynb':
+        stripped_script = _prune_jupyter(script_text)
     if verbose:
         line_count1 = len(script_text.splitlines())
         line_count2 = len(stripped_script.splitlines())
@@ -180,10 +199,10 @@ def _parse_input_python_v2(file: BytesIO, verbose: bool = False):
     return stripped_script
 
 
-def _parse_multiple_files(file_list, verbose=False):
+def _parse_multiple_files(file_list, file_type: str = 'py', verbose=False):
     list_contents = []
     for file in file_list:
-        list_contents.append(_parse_input_python_v2(file, verbose))
+        list_contents.append(_parse_input_python_v2(file, file_type, verbose))
     delimiter = '\n'
     result = delimiter.join(list_contents)
     return result
@@ -281,9 +300,12 @@ def _prune_yaml(yaml_str: str, count: int):
     return pruned_yaml
 
 
-def chatgpt_parse_parameters(file_contents):
+def chatgpt_parse_parameters(file_contents, file_type: str = 'py'):
     openai.api_key = environ.get("OPENAI_KEY")
-    parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
+    if file_type == 'py':
+        parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
+    elif file_type == 'ipynb':
+        parameters = openai_chat_completion(jupyter_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
     if is_invalid_yaml(parameters):
         formatted_parameters = _extract_yaml(parameters)
         pruned_yaml = _prune_yaml(formatted_parameters, MAX_PARAMETERS)
@@ -321,7 +343,6 @@ def substring_parse_parameters(files) -> str:
     parameters = {}
     library_found = False
     
-    for file in files:
         file_lines, argument_parsing_library = _parse_input_python(file)
         if argument_parsing_library is not None:
             library_found = True
@@ -331,13 +352,13 @@ def substring_parse_parameters(files) -> str:
     return json_to_yaml(formatted_parameters)
 
     
-def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str],
+def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], file_type: str = 'py',
                               method: Union[PARSE_WITH_CHATGPT_MODE, PARSE_MANUALLY_MODE] = PARSE_WITH_CHATGPT_MODE) \
         -> (str, str, str):
     if method == PARSE_WITH_CHATGPT_MODE:
-        file_contents = _parse_multiple_files(file_list=files, verbose=False)
+        file_contents = _parse_multiple_files(file_list=files, file_type=file_type, verbose=False)
         try:
-            formatted_parameters = chatgpt_parse_parameters(file_contents)    
+            formatted_parameters = chatgpt_parse_parameters(file_contents, file_type=file_type)    
         except Exception as e:
             formatted_parameters = substring_parse_parameters(files)
         try:
