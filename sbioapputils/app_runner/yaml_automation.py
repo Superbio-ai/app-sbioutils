@@ -187,7 +187,7 @@ def _prune_jupyter(script_text):
         if not any(substring in line for substring in keep):
             continue
         new_text += line + "\n"
-    return(new_text)
+    return new_text
 
 
 def _parse_input_python_v2(file: BytesIO, file_type: str = 'py', verbose: bool = False):
