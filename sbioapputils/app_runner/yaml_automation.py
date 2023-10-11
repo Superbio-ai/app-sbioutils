@@ -173,7 +173,7 @@ def _prune_script(script_text):
 def _prune_jupyter(script_text):
     startstrings = ["#","'''","import","from"]
     endstrings = ["'''"]
-    substrings = ["print","ipython"]
+    substrings = ["print", "ipython"]
     keep = ["="] #,"def ","class "]
     new_text = ""
     lines = list(set(script_text.splitlines()))
