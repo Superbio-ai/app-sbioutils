@@ -75,10 +75,11 @@ def _dict_from_args(filelines: List[str], library: str):
     return parameter_dict
 
 
-def _stages_from_scripts(filenames):
+def _stages_from_scripts(file_dict: dict):
     stages = {}
-    for file in filenames:
-        file_name = file.split('/')[-1].split('.py')[0]
+    for file, file_details in file_dict.items():
+        #separate file name from file extension
+        file_name = file.split('/')[-1].split(f".{file_details['file_type']}")[0]
         stages[file_name] = {'file': file}
     return json_to_yaml(stages)
 
@@ -203,13 +204,16 @@ def _parse_input_python_v2(file: BytesIO, file_type: str = 'py', verbose: bool =
     return stripped_script
 
 
-def _parse_multiple_files(file_list, file_type: str = 'py', verbose=False):
+def _parse_multiple_files(file_dict: dict, verbose=False):
     list_contents = []
-    for file in file_list:
-        list_contents.append(_parse_input_python_v2(file, file_type, verbose))
+    ipynb_detected = False
+    for file_details in file_dict.values():
+        list_contents.append(_parse_input_python_v2(file_details['file'], file_details['file_type'], verbose))
+        if file_details['file_type']=='ipynb':
+            ipynb_detected = True        
     delimiter = '\n'
     result = delimiter.join(list_contents)
-    return result
+    return result, ipynb_detected
 
 
 def openai_chat_completion(prompt, file_contents, max_token=50, outputs=1, temperature=0.75, model="gpt-4-0613"):
@@ -302,12 +306,12 @@ def _prune_yaml(yaml_str: str, count: int):
     return pruned_yaml
 
 
-def chatgpt_parse_parameters(file_contents, file_type: str = 'py'):
+def chatgpt_parse_parameters(file_contents, ipynb_detected):
     openai.api_key = environ.get("OPENAI_KEY")
-    if file_type == 'py':
-        parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
-    elif file_type == 'ipynb':
+    if ipynb_detected:
         parameters = openai_chat_completion(jupyter_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
+    else:
+        parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
     if is_invalid_yaml(parameters):
         formatted_parameters = _extract_yaml(parameters)
         pruned_yaml = _prune_yaml(formatted_parameters, MAX_PARAMETERS)
@@ -341,12 +345,12 @@ def yaml_to_json(str_value: str) -> Optional[dict]:
     return dict_value
 
 
-def substring_parse_parameters(files) -> str:
+def substring_parse_parameters(file_dict: dict) -> str:
     parameters = {}
     library_found = False
     
-    for file in files:
-        file_lines, argument_parsing_library = _parse_input_python(file)
+    for file_details in file_dict.values():
+        file_lines, argument_parsing_library = _parse_input_python(file_details['file'])
         if argument_parsing_library is not None:
             library_found = True
             new_parameters = _dict_from_args(file_lines, argument_parsing_library)
@@ -355,25 +359,31 @@ def substring_parse_parameters(files) -> str:
     return json_to_yaml(formatted_parameters)
 
     
-def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str], file_type: str = 'py',
+def parameters_yaml_from_args(file_dict: dict,
                               method: Union[PARSE_WITH_CHATGPT_MODE, PARSE_MANUALLY_MODE] = PARSE_WITH_CHATGPT_MODE) \
         -> (str, str, str):
+    '''file_dict configuration:
+    file_name as keys,
+    file: BytesIO,
+    file_type: str = 'py'
+    example: file_dict = {fileone: {file: BytesIO, file_type: 'py'}, filetwo: {file: BytesIO, file_type: 'py'}}'''
+    
     if method == PARSE_WITH_CHATGPT_MODE:
-        file_contents = _parse_multiple_files(file_list=files, file_type=file_type, verbose=False)
+        file_contents, ipynb_detected = _parse_multiple_files(file_dict=file_dict, verbose=False)
         try:
-            formatted_parameters = chatgpt_parse_parameters(file_contents, file_type=file_type)    
+            formatted_parameters = chatgpt_parse_parameters(file_contents, ipynb_detected)
         except Exception as e:
-            formatted_parameters = substring_parse_parameters(files)
+            formatted_parameters = substring_parse_parameters(file_dict)
         try:
             input_settings = chatgpt_parse_inputs(file_contents)
         except:
             input_settings = substring_parse_inputs(formatted_parameters)
         
     elif method == PARSE_MANUALLY_MODE:
-        formatted_parameters = substring_parse_parameters(files)
+        formatted_parameters = substring_parse_parameters(file_dict)
         input_settings = substring_parse_inputs(formatted_parameters)
     
-    stages = _stages_from_scripts(filenames)
+    stages = _stages_from_scripts(file_dict)
     
     # output settings not covered
     return stages, formatted_parameters, input_settings
