@@ -358,6 +358,16 @@ def substring_parse_parameters(file_dict: dict) -> str:
     formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
     return json_to_yaml(formatted_parameters)
 
+
+def _validate_param_dict(file_dict):
+    for sub_dict in file_dict.values():
+        if 'file' not in sub_dict:
+            raise ValueError('file not found in input dict')
+        elif not isinstance(sub_dict['file'], (bytes, bytearray)):
+            raise ValueError('file is not a BytesIO object')
+        if 'file_type' not in sub_dict:
+            raise ValueError('file_type not found in input dict')
+            
     
 def parameters_yaml_from_args(file_dict: dict,
                               method: Union[PARSE_WITH_CHATGPT_MODE, PARSE_MANUALLY_MODE] = PARSE_WITH_CHATGPT_MODE) \
@@ -367,6 +377,7 @@ def parameters_yaml_from_args(file_dict: dict,
     file: BytesIO,
     file_type: str = 'py'
     example: file_dict = {fileone: {file: BytesIO, file_type: 'py'}, filetwo: {file: BytesIO, file_type: 'py'}}'''
+    _validate_param_dict(file_dict)
     
     if method == PARSE_WITH_CHATGPT_MODE:
         file_contents, ipynb_detected = _parse_multiple_files(file_dict=file_dict, verbose=False)
