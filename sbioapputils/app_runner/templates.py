@@ -174,3 +174,26 @@ END INSTRUCTIONS
 
 Now, take a deep breath and follow all the instructions step-by-step to generate the YAML file, from the following script:
 """
+
+jupyter_parameter_automation_prompt = """Can you list all the string, numeric and boolean arguments in this script?
+            For arguments without type, please infer the likely type from the following options only: int, float, str, boolean.
+            Please provide this as a YAML configuration file.
+            Add the option 'input_type' as 'slider' for numeric, 'dropdown' for string, 'checkbox' for Boolean.
+            Rename 'help' or similar options as 'tooltip'.
+            If possible dropdown values are included in tooltips then include these as another option called "options" with the possible values provided in an array.
+            Below are two examples of what an argument should look like:
+            ndf:
+              type: int
+              help: Number of discriminator filters in the first convolutional layer.
+              input_type: slider
+              default: 64
+              min: 16
+              max: 512
+              increment: 16
+            init-type:
+              type: str
+              tooltip: 'network initialization [normal | xavier | kaiming | orthogonal]'
+              input_type: dropdown
+              options: ['normal','xavier','kaiming','orthogonal']
+              default: 'normal'  
+            """

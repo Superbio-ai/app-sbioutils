@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from yaml import SafeLoader
 
-from .templates import csv_template, image_template, sc_template, standard_parameter_automation_prompt, standard_input_automation_prompt
+from .templates import csv_template, image_template, sc_template, standard_parameter_automation_prompt, standard_input_automation_prompt, jupyter_parameter_automation_prompt
 from .templates import argparse_tags, click_tags, allowed_types, allowed_args, boolean_values, MAX_PARAMETERS, MAX_INPUTS
 
 import openai
@@ -75,10 +75,11 @@ def _dict_from_args(filelines: List[str], library: str):
     return parameter_dict
 
 
-def _stages_from_scripts(filenames):
+def _stages_from_scripts(file_dict: dict):
     stages = {}
-    for file in filenames:
-        file_name = file.split('/')[-1].split('.py')[0]
+    for file, file_details in file_dict.items():
+        #separate file name from file extension
+        file_name = file.split('/')[-1].split(f".{file_details['file_type']}")[0]
         stages[file_name] = {'file': file}
     return json_to_yaml(stages)
 
@@ -170,9 +171,32 @@ def _prune_script(script_text):
     return new_text
 
 
-def _parse_input_python_v2(file: BytesIO, verbose: bool = False):
+def _prune_jupyter(script_text):
+    startstrings = ["#", "'''", "import", "from"]
+    endstrings = ["'''"]
+    substrings = ["print", "ipython"]
+    keep = ["="] #,"def ","class "]
+    new_text = ""
+    lines = list(set(script_text.splitlines()))
+    for line in lines:
+        if any(line.lstrip().startswith(substring) for substring in startstrings):
+            continue
+        if any(line.rstrip().endswith(substring) for substring in endstrings):
+            continue
+        if any(substring in line for substring in substrings):
+            continue
+        if not any(substring in line for substring in keep):
+            continue
+        new_text += line + "\n"
+    return new_text
+
+
+def _parse_input_python_v2(file: BytesIO, file_type: str = 'py', verbose: bool = False):
     script_text = file.getvalue().decode('ASCII')
-    stripped_script = _prune_script(script_text)
+    if file_type=='py':
+        stripped_script = _prune_script(script_text)
+    elif file_type=='ipynb':
+        stripped_script = _prune_jupyter(script_text)
     if verbose:
         line_count1 = len(script_text.splitlines())
         line_count2 = len(stripped_script.splitlines())
@@ -180,13 +204,16 @@ def _parse_input_python_v2(file: BytesIO, verbose: bool = False):
     return stripped_script
 
 
-def _parse_multiple_files(file_list, verbose=False):
+def _parse_multiple_files(file_dict: dict, verbose=False):
     list_contents = []
-    for file in file_list:
-        list_contents.append(_parse_input_python_v2(file, verbose))
+    ipynb_detected = False
+    for file_details in file_dict.values():
+        list_contents.append(_parse_input_python_v2(file_details['file'], file_details['file_type'], verbose))
+        if file_details['file_type']=='ipynb':
+            ipynb_detected = True        
     delimiter = '\n'
     result = delimiter.join(list_contents)
-    return result
+    return result, ipynb_detected
 
 
 def openai_chat_completion(prompt, file_contents, max_token=50, outputs=1, temperature=0.75, model="gpt-4-0613"):
@@ -255,18 +282,16 @@ def substring_parse_inputs(parameters_yaml: str) -> str:
 
 
 def validate_multiple_outputs(outputs):
-    checkpoint = 0
-    not_yaml = 0
     valid_outputs = []
     for output in outputs:
         valid = True
         # check has not returned directories or checkpoints as input files
         if any(substring in output for substring in ['directory', 'Directory', 'checkpoint', 'Checkpoint']):
-            checkpoint += 1
             valid = False
-        if not is_invalid_yaml(output):
-            not_yaml += 1
-            valid = False
+        if is_invalid_yaml(output):
+            output = _extract_yaml(output)
+            if is_invalid_yaml(output):    
+                valid = False
         if valid:
             valid_outputs.append(output)
     return valid_outputs
@@ -281,9 +306,12 @@ def _prune_yaml(yaml_str: str, count: int):
     return pruned_yaml
 
 
-def chatgpt_parse_parameters(file_contents):
+def chatgpt_parse_parameters(file_contents, ipynb_detected):
     openai.api_key = environ.get("OPENAI_KEY")
-    parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
+    if ipynb_detected:
+        parameters = openai_chat_completion(jupyter_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
+    else:
+        parameters = openai_chat_completion(standard_parameter_automation_prompt, file_contents, max_token=3000, outputs=1)
     if is_invalid_yaml(parameters):
         formatted_parameters = _extract_yaml(parameters)
         pruned_yaml = _prune_yaml(formatted_parameters, MAX_PARAMETERS)
@@ -317,12 +345,12 @@ def yaml_to_json(str_value: str) -> Optional[dict]:
     return dict_value
 
 
-def substring_parse_parameters(files) -> str:
+def substring_parse_parameters(file_dict: dict) -> str:
     parameters = {}
     library_found = False
     
-    for file in files:
-        file_lines, argument_parsing_library = _parse_input_python(file)
+    for file_details in file_dict.values():
+        file_lines, argument_parsing_library = _parse_input_python(file_details['file'])
         if argument_parsing_library is not None:
             library_found = True
             new_parameters = _dict_from_args(file_lines, argument_parsing_library)
@@ -330,26 +358,43 @@ def substring_parse_parameters(files) -> str:
     formatted_parameters = _format_argparse_parameters(parameters) if library_found else parameters
     return json_to_yaml(formatted_parameters)
 
+
+def _validate_param_dict(file_dict):
+    for sub_dict in file_dict.values():
+        if 'file' not in sub_dict:
+            raise ValueError('file not found in input dict')
+        elif not isinstance(sub_dict['file'], (bytes, bytearray)):
+            raise ValueError('file is not a BytesIO object')
+        if 'file_type' not in sub_dict:
+            raise ValueError('file_type not found in input dict')
+            
     
-def parameters_yaml_from_args(files: List[BytesIO], filenames: List[str],
+def parameters_yaml_from_args(file_dict: dict,
                               method: Union[PARSE_WITH_CHATGPT_MODE, PARSE_MANUALLY_MODE] = PARSE_WITH_CHATGPT_MODE) \
         -> (str, str, str):
+    '''file_dict configuration:
+    file_name as keys,
+    file: BytesIO,
+    file_type: str = 'py'
+    example: file_dict = {fileone: {file: BytesIO, file_type: 'py'}, filetwo: {file: BytesIO, file_type: 'py'}}'''
+    _validate_param_dict(file_dict)
+    
     if method == PARSE_WITH_CHATGPT_MODE:
-        file_contents = _parse_multiple_files(file_list=files, verbose=False)
+        file_contents, ipynb_detected = _parse_multiple_files(file_dict=file_dict, verbose=False)
         try:
-            formatted_parameters = chatgpt_parse_parameters(file_contents)    
+            formatted_parameters = chatgpt_parse_parameters(file_contents, ipynb_detected)
         except Exception as e:
-            formatted_parameters = substring_parse_parameters(files)
+            formatted_parameters = substring_parse_parameters(file_dict)
         try:
             input_settings = chatgpt_parse_inputs(file_contents)
         except:
             input_settings = substring_parse_inputs(formatted_parameters)
         
     elif method == PARSE_MANUALLY_MODE:
-        formatted_parameters = substring_parse_parameters(files)
+        formatted_parameters = substring_parse_parameters(file_dict)
         input_settings = substring_parse_inputs(formatted_parameters)
     
-    stages = _stages_from_scripts(filenames)
+    stages = _stages_from_scripts(file_dict)
     
     # output settings not covered
     return stages, formatted_parameters, input_settings
