@@ -178,11 +178,15 @@ def _prune_jupyter(script_text):
     new_text = ""
     lines = list(set(script_text.splitlines()))
     for line in lines:
-        if not any(line.lstrip().startswith(substring) for substring in startstrings):
-            if not any(line.rstrip().endswith(substring) for substring in endstrings):
-                if not any(substring in line for substring in substrings):
-                    if any(substring in line for substring in keep):
-                        new_text += line + "\n"
+        if any(line.lstrip().startswith(substring) for substring in startstrings):
+            continue
+        if any(line.rstrip().endswith(substring) for substring in endstrings):
+            continue
+        if any(substring in line for substring in substrings):
+            continue
+        if not any(substring in line for substring in keep):
+            continue
+        new_text += line + "\n"
     return(new_text)
 
 
