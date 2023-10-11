@@ -171,7 +171,7 @@ def _prune_script(script_text):
 
 
 def _prune_jupyter(script_text):
-    startstrings = ["#","'''","import","from"]
+    startstrings = ["#", "'''", "import", "from"]
     endstrings = ["'''"]
     substrings = ["print", "ipython"]
     keep = ["="] #,"def ","class "]
