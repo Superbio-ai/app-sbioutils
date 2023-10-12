@@ -78,9 +78,9 @@ def _dict_from_args(filelines: List[str], library: str):
 def _stages_from_scripts(files_data: List[dict]):
     stages = {}
     for file_details in files_data:
-        file, file_details, file_name = file_details['file'], file_details['file_type'], file_details['file_name']
+        file, file_type, file_name = file_details['file'], file_details['file_type'], file_details['file_name']
         # separate file name from file extension
-        file_name = file_name.split('/')[-1].split(f".{file_details['file_type']}")[0]
+        file_name = file_name.split('/')[-1].split(f".{file_type}")[0]
         stages[file_name] = {'file': file}
     return json_to_yaml(stages)
 
@@ -381,7 +381,7 @@ def parameters_yaml_from_args(files_data: List[dict],
     file_type: str = 'py'
     example: file_dict = {fileone: {file: BytesIO, file_type: 'py'}, filetwo: {file: BytesIO, file_type: 'py'}}'''
     _validate_param_dict(files_data)
-    
+
     if method == PARSE_WITH_CHATGPT_MODE:
         file_contents, ipynb_detected = _parse_multiple_files(files_data=files_data, verbose=False)
         try:
@@ -390,9 +390,9 @@ def parameters_yaml_from_args(files_data: List[dict],
             formatted_parameters = substring_parse_parameters(files_data)
         try:
             input_settings = chatgpt_parse_inputs(file_contents)
-        except:
+        except Exception as e:
             input_settings = substring_parse_inputs(formatted_parameters)
-        
+
     elif method == PARSE_MANUALLY_MODE:
         formatted_parameters = substring_parse_parameters(files_data)
         input_settings = substring_parse_inputs(formatted_parameters)
