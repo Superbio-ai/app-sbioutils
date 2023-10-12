@@ -75,11 +75,12 @@ def _dict_from_args(filelines: List[str], library: str):
     return parameter_dict
 
 
-def _stages_from_scripts(file_dict: dict):
+def _stages_from_scripts(files_data: List[dict]):
     stages = {}
-    for file, file_details in file_dict.items():
-        #separate file name from file extension
-        file_name = file.split('/')[-1].split(f".{file_details['file_type']}")[0]
+    for file_details in files_data:
+        file, file_details, file_name = file_details['file'], file_details['file_type'], file_details['file_name']
+        # separate file name from file extension
+        file_name = file_name.split('/')[-1].split(f".{file_details['file_type']}")[0]
         stages[file_name] = {'file': file}
     return json_to_yaml(stages)
 
@@ -204,12 +205,12 @@ def _parse_input_python_v2(file: BytesIO, file_type: str = 'py', verbose: bool =
     return stripped_script
 
 
-def _parse_multiple_files(file_dict: dict, verbose=False):
+def _parse_multiple_files(files_data: List[dict], verbose=False):
     list_contents = []
     ipynb_detected = False
-    for file_details in file_dict.values():
+    for file_details in files_data:
         list_contents.append(_parse_input_python_v2(file_details['file'], file_details['file_type'], verbose))
-        if file_details['file_type']=='ipynb':
+        if file_details['file_type'] == 'ipynb':
             ipynb_detected = True        
     delimiter = '\n'
     result = delimiter.join(list_contents)
@@ -345,11 +346,11 @@ def yaml_to_json(str_value: str) -> Optional[dict]:
     return dict_value
 
 
-def substring_parse_parameters(file_dict: dict) -> str:
+def substring_parse_parameters(files_data: List[dict]) -> str:
     parameters = {}
     library_found = False
     
-    for file_details in file_dict.values():
+    for file_details in files_data:
         file_lines, argument_parsing_library = _parse_input_python(file_details['file'])
         if argument_parsing_library is not None:
             library_found = True
@@ -359,17 +360,19 @@ def substring_parse_parameters(file_dict: dict) -> str:
     return json_to_yaml(formatted_parameters)
 
 
-def _validate_param_dict(file_dict):
-    for sub_dict in file_dict.values():
-        if 'file' not in sub_dict:
+def _validate_param_dict(files_data: List[dict]):
+    for file_dict in files_data:
+        if 'file' not in file_dict:
             raise ValueError('file not found in input dict')
-        elif not isinstance(sub_dict['file'], (bytes, bytearray)):
+        elif not isinstance(file_dict['file'], (bytes, bytearray, BytesIO)):
             raise ValueError('file is not a BytesIO object')
-        if 'file_type' not in sub_dict:
+        if 'file_type' not in file_dict:
             raise ValueError('file_type not found in input dict')
+        if 'file_name' not in file_dict:
+            raise ValueError('file_name not found in input dict')
             
     
-def parameters_yaml_from_args(file_dict: dict,
+def parameters_yaml_from_args(files_data: List[dict],
                               method: Union[PARSE_WITH_CHATGPT_MODE, PARSE_MANUALLY_MODE] = PARSE_WITH_CHATGPT_MODE) \
         -> (str, str, str):
     '''file_dict configuration:
@@ -377,24 +380,24 @@ def parameters_yaml_from_args(file_dict: dict,
     file: BytesIO,
     file_type: str = 'py'
     example: file_dict = {fileone: {file: BytesIO, file_type: 'py'}, filetwo: {file: BytesIO, file_type: 'py'}}'''
-    _validate_param_dict(file_dict)
+    _validate_param_dict(files_data)
     
     if method == PARSE_WITH_CHATGPT_MODE:
-        file_contents, ipynb_detected = _parse_multiple_files(file_dict=file_dict, verbose=False)
+        file_contents, ipynb_detected = _parse_multiple_files(files_data=files_data, verbose=False)
         try:
             formatted_parameters = chatgpt_parse_parameters(file_contents, ipynb_detected)
         except Exception as e:
-            formatted_parameters = substring_parse_parameters(file_dict)
+            formatted_parameters = substring_parse_parameters(files_data)
         try:
             input_settings = chatgpt_parse_inputs(file_contents)
         except:
             input_settings = substring_parse_inputs(formatted_parameters)
         
     elif method == PARSE_MANUALLY_MODE:
-        formatted_parameters = substring_parse_parameters(file_dict)
+        formatted_parameters = substring_parse_parameters(files_data)
         input_settings = substring_parse_inputs(formatted_parameters)
     
-    stages = _stages_from_scripts(file_dict)
+    stages = _stages_from_scripts(files_data)
     
     # output settings not covered
     return stages, formatted_parameters, input_settings
