@@ -193,9 +193,10 @@ def _prune_jupyter(script_text):
 
 def _parse_input_python_v2(file: BytesIO, file_type: str = 'py', verbose: bool = False):
     script_text = file.getvalue().decode('ASCII')
+    stripped_script = ''
     if file_type=='py':
         stripped_script = _prune_script(script_text)
-    elif file_type=='ipynb':
+    if (file_type=='ipynb') or len(stripped_script)==0:
         stripped_script = _prune_jupyter(script_text)
     if verbose:
         line_count1 = len(script_text.splitlines())
