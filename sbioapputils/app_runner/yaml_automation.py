@@ -197,7 +197,7 @@ def _parse_input_python_v2(file: BytesIO, file_type: str = 'py', verbose: bool =
     stripped_script = ''
     if file_type=='py':
         stripped_script = _prune_script(script_text)
-    if file_type=='ipynb' or len(stripped_script)==0:
+    if len(stripped_script)==0:
         stripped_script = _prune_jupyter(script_text)
     if verbose:
         line_count1 = len(script_text.splitlines())
