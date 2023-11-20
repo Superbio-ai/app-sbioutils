@@ -248,6 +248,13 @@ def payload_from_config(yaml_dict):
         
     if output_settings.get('tables'):
         results_for_payload['tables'] = _generate_carousel(carousel_settings_dict=output_settings['tables'])
+    
+    if output_settings.get('pdbs'):
+        full_files = []
+        for output_file in output_settings['pdbs'].keys():
+            full_files.append({'file': output_settings['pdbs'][output_file]['file'],
+                                 'title': output_settings['pdbs'][output_file]['title']})
+        results_for_payload['pdbs'] = [full_files]
         
     if output_settings.get('download'):
         full_files = []
@@ -282,6 +289,7 @@ def payload_from_folder(folder_loc, yaml_dict):
     tables = []
     images = []
     figures = []
+    pdbs = []
     additional_artifacts = []
     for file in folder_contents:
         file_ext = file.split('.')[-1]
@@ -291,6 +299,8 @@ def payload_from_folder(folder_loc, yaml_dict):
             images.append(folder_loc + file)
         elif file_ext in ['html']:
             figures.append(folder_loc + file)
+        elif file_ext in ['pdb']:
+            pdbs.append(folder_loc + file)
         elif len(file.split('.')) > 1:
             if os.path.isdir(file):
                 for sub_element in os.listdir(file):
@@ -314,6 +324,13 @@ def payload_from_folder(folder_loc, yaml_dict):
         results_for_payload['tables'] = _generate_carousel(carousel_settings_dict=output_settings['tables'])
     else:
         results_for_payload['tables'] = [_generate_file_dict(tables)]
+    
+    if output_settings.get('pdbs'):
+        full_files = []
+        for output_file in output_settings['pdbs'].keys():
+            full_files.append({'file': output_settings['pdbs'][output_file]['file'],
+                                 'title': output_settings['pdbs'][output_file]['title']})
+        results_for_payload['pdbs'] = [full_files]
         
     if output_settings.get('download'):
         full_files = []
