@@ -32,6 +32,7 @@ class AppRunnerUtils:
         src_files.extend(cls._build_file_list(results.get('images')))
         src_files.extend(cls._build_file_list(results.get('figures')))
         src_files.extend(cls._build_file_list(results.get('tables')))
+        src_files.extend(cls._build_file_list(results.get('pdbs')))
         # download is a list of dict
         if results.get('download'):
             for file_dict in results.get('download'):
