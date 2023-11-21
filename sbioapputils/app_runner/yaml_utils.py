@@ -250,11 +250,7 @@ def payload_from_config(yaml_dict):
         results_for_payload['tables'] = _generate_carousel(carousel_settings_dict=output_settings['tables'])
     
     if output_settings.get('pdbs'):
-        full_files = []
-        for output_file in output_settings['pdbs'].keys():
-            full_files.append({'file': output_settings['pdbs'][output_file]['file'],
-                                 'title': output_settings['pdbs'][output_file]['title']})
-        results_for_payload['pdbs'] = [full_files]
+        results_for_payload['pdbs'] = _generate_carousel(carousel_settings_dict=output_settings['pdbs'])        
         
     if output_settings.get('download'):
         full_files = []
@@ -326,12 +322,10 @@ def payload_from_folder(folder_loc, yaml_dict):
         results_for_payload['tables'] = [_generate_file_dict(tables)]
     
     if output_settings.get('pdbs'):
-        full_files = []
-        for output_file in output_settings['pdbs'].keys():
-            full_files.append({'file': output_settings['pdbs'][output_file]['file'],
-                                 'title': output_settings['pdbs'][output_file]['title']})
-        results_for_payload['pdbs'] = [full_files]
-        
+        results_for_payload['pdbs'] = _generate_carousel(carousel_settings_dict=output_settings['pdbs'])
+    else:
+        results_for_payload['pdbs'] = [_generate_file_dict(pdbs)]
+    
     if output_settings.get('download'):
         full_files = []
         for output_file in output_settings['download'].keys():
