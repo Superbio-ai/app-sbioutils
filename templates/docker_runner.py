@@ -14,7 +14,7 @@ def _get_yaml(job_id: str, request: dict):
     workflow_name, workflow_dest = get_workflow_loc(job_id, request)
     source_file_path = f'apps/{job_id}/resources/{workflow_name}'
     AppRunnerUtils.download_file(source_file_path, workflow_dest)
-    ################ n.b. might need to clear dest every so often as could build up with files/folders ###############
+    ################ n.b. might need to clear dest every so often as could build up with files/folders. Should be a better way to do this ###############
 
 
 def _process_stage(stage_name, command):
