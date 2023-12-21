@@ -1,0 +1,29 @@
+name: simple_ml_train
+
+vm_config: {key_file: 'S3_URL?/prepare_data.pem', target_ip: '123.0.0.1', container_name: 'simple_ml_train'}
+
+stages:
+    preprocess:
+        script: {file: '/prepare_data.py'}
+        input_file: {type: 'path', default: '/data/test.csv'}
+        model_type: {name: 'Problem Type', type: 'str', default: 'regression', user_defined: 'True', tooltip: 'linear_model, random_forest, gradient_boosting, neural_network, or best', options: ['linear_model','random_forest','gradient_boosting',
+        'neural_network']}
+        predictors: {name: 'Predictors', type: 'str', default: '', user_defined: 'True', tooltip: 'columns in dataset to use as predictors, provided as a list separated by commas. If empty will be all columns except for target'}
+        target: {name: 'Target', type: 'str', default: 'Target', user_defined: 'True', tooltip: 'column in dataset to use as target'}
+        train_test_ratio: {name: 'Train-Test Ratio', type: 'float', user_defined: 'True', default: 0.7, min_value: 0.1, max_value: 0.9, increment: 0.1}
+        missing_treatment: {name: 'Missing Data Treatment', type: 'str', user_defined: 'True', default: 'drop', tooltip: 'either drop rows with missing data, or replace missing data with mean of each column', options: ['drop','mean']}
+    train:
+        script: {file: '/train.py'}
+        input_file: {type: 'path', default: '/data/test.csv'}
+        model_type: {name: 'Problem Type', type: 'str', default: 'regression', user_defined: 'True', tooltip: 'linear_model, random_forest, gradient_boosting, neural_network, or best', options: ['linear_model','random_forest','gradient_boosting',
+        'neural_network']}
+        predictors: {name: 'Predictors', type: 'str', default: '', user_defined: 'True', tooltip: 'columns in dataset to use as predictors, provided as a list separated by commas. If empty will be all columns except for target'}
+        target: {name: 'Target', type: 'str', default: 'Target', user_defined: 'True', tooltip: 'column in dataset to use as target'}
+        train_test_ratio: {name: 'Train-Test Ratio', type: 'float', user_defined: 'True', default: 0.7, min_value: 0.1, max_value: 0.9, increment: 0.1}
+        missing_treatment: {name: 'Missing Data Treatment', type: 'str', user_defined: 'True', default: 'drop', tooltip: 'either drop rows with missing data, or replace missing data with mean of each column', options: ['drop','mean']}
+
+input_settings:
+    data_path: {title: 'Sample Data', description: 'Data should be in .csv format', type: 'tabular', demo_path: 'TO_ADD_LATER', demo_description: 'TO_ADD_LATER', url: 'TO_ADD_LATER'}
+        
+output_settings:
+    folder: '/outputs/'
