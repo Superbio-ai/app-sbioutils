@@ -83,6 +83,7 @@ def main():
         
         for stage, command in stages.items():
             _process_stage(stage, command)
+            logging.info(f"Stage {stage} completed")
         _upload_results(job_id, request)
         
     except Exception as e:

@@ -41,7 +41,7 @@ def parse_workflow(job_id: str, request: dict):
         for key, value in parameters.items():
             if key in request_numeric.keys():
                 cmd_list.append("--" + key)
-                cmd_list.append(str(value))
+                cmd_list.append(str(request_numeric[key]))
         stages[stage] = ' '.join(cmd_list)
     
     return stages, errors
