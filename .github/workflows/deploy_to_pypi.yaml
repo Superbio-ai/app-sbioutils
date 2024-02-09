@@ -2,7 +2,7 @@ name: Deploy new version to pypi
 
 on:
   push:
-    branches: [ test_build ]
+    branches: [ master ]
     paths:
       - 'setup.py'
 
