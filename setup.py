@@ -12,3 +12,5 @@ setup(
                         'anndata>=0.8.0', 'numpy>=1.22', 'file-process', 'openai', 'pyyaml'],
       packages=['sbioapputils', 'sbioapputils.app_runner', 'sbioapputils.load']
 )
+
+#test
