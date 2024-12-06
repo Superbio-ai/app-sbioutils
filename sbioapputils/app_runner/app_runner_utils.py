@@ -153,17 +153,21 @@ class AppRunnerUtils:
         requests.put(f'{api_url}/api/jobs/{job_id}/running', headers=headers)
 
     @classmethod
-    def set_job_completed(cls, job_id: str, result_files: dict):
+    def set_job_completed(cls, job_id: str, result_files: dict, credit = 0):
         token = cls.get_api_token()
         api_url = os.environ.get("SBIO_API_URL")
         headers = {'Authorization': f'Bearer {token}'}
         payload = {'result_files': {'files': result_files}}
+        if credit > 0:
+            payload['credits'] = credit
         requests.put(f'{api_url}/api/jobs/{job_id}/completed', headers=headers, json=payload)
 
     @classmethod
-    def set_job_failed(cls, job_id: str, err_msg: str):
+    def set_job_failed(cls, job_id: str, err_msg: str, credit = 0):
         token = cls.get_api_token()
         api_url = os.environ.get("SBIO_API_URL")
         headers = {'Authorization': f'Bearer {token}'}
         payload = {'error_message': err_msg}
+        if credit > 0:
+            payload['credits'] = credit
         requests.put(f'{api_url}/api/jobs/{job_id}/failed', headers=headers, json=payload)
