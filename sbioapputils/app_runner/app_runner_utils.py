@@ -76,7 +76,7 @@ class AppRunnerUtils:
         f = open(dest_file_path, "wb")
         f.write(obj.get()['Body'].read())
         f.close()
-    
+
     @classmethod
     def load_file(cls, source_file_path: str):
         bucket = cls.get_s3_bucket()
@@ -88,8 +88,8 @@ class AppRunnerUtils:
     def set_logging(cls, log_file: str):
         handler = WatchedFileHandler(log_file)
         formatter = logging.Formatter(
-                    "%(asctime)s  [%(levelname)s]\n%(message)s",
-                        "%Y-%m-%d %H:%M:%S")
+            "%(asctime)s  [%(levelname)s]\n%(message)s",
+            "%Y-%m-%d %H:%M:%S")
         handler.setFormatter(formatter)
         root = logging.getLogger()
         root.setLevel("INFO")
@@ -114,11 +114,11 @@ class AppRunnerUtils:
             return response.json()['folder']
         else:
             logging.error(response)
- 
+
     @classmethod
     def get_job_config(cls, job_id: str):
         if "JOB_CONFIG" in os.environ:
-            response =  eval(os.environ.get("JOB_CONFIG"))
+            response = eval(os.environ.get("JOB_CONFIG"))
             return response
         else:
             token = cls.get_api_token()
@@ -126,14 +126,22 @@ class AppRunnerUtils:
             headers = {'Authorization': f'Bearer {token}'}
             response = requests.get(f'{api_url}/api/jobs/{job_id}/config', headers=headers)
             if response.status_code == 200:
-                return response.json()['config']          
+                return response.json()['config']
             else:
                 logging.error(response)
 
     @classmethod
+    def get_job_run_by_admin(cls):
+        if "RUN_BY_ADMIN" in os.environ:
+            response = eval(os.environ.get("RUN_BY_ADMIN"))
+            return response
+        else:
+            return False
+
+    @classmethod
     def get_job_config_v2(cls, job_id: str):
         if "JOB_CONFIG" in os.environ:
-            response =  eval(os.environ.get("JOB_CONFIG"))
+            response = eval(os.environ.get("JOB_CONFIG"))
             return response
         else:
             token = cls.get_api_token()
@@ -153,7 +161,7 @@ class AppRunnerUtils:
         requests.put(f'{api_url}/api/jobs/{job_id}/running', headers=headers)
 
     @classmethod
-    def set_job_completed(cls, job_id: str, result_files: dict, credit = 0):
+    def set_job_completed(cls, job_id: str, result_files: dict, credit=0):
         token = cls.get_api_token()
         api_url = os.environ.get("SBIO_API_URL")
         headers = {'Authorization': f'Bearer {token}'}
@@ -163,7 +171,7 @@ class AppRunnerUtils:
         requests.put(f'{api_url}/api/jobs/{job_id}/completed', headers=headers, json=payload)
 
     @classmethod
-    def set_job_failed(cls, job_id: str, err_msg: str, credit = 0):
+    def set_job_failed(cls, job_id: str, err_msg: str, credit=0):
         token = cls.get_api_token()
         api_url = os.environ.get("SBIO_API_URL")
         headers = {'Authorization': f'Bearer {token}'}
