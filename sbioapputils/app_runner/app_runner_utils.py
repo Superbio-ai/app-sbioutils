@@ -179,3 +179,15 @@ class AppRunnerUtils:
         if credit > 0:
             payload['credits'] = credit
         requests.put(f'{api_url}/api/jobs/{job_id}/failed', headers=headers, json=payload)
+
+    @classmethod
+    def verify_user_has_enough_credits(cls, job_id: str, expected_credit_usage: int):
+        token = cls.get_api_token()
+        api_url = os.environ.get("SBIO_API_URL")
+        headers = {'Authorization': f'Bearer {token}'}
+        payload = {'job_id': job_id, 'prelim_expected_credit_usage': expected_credit_usage}
+        response = requests.put(f'{api_url}/api/verify_enough_credits', headers=headers, params=payload)
+        if response.status_code == 200:
+            return response.json()['has_enough_credits']
+        else:
+            logging.error(response)
