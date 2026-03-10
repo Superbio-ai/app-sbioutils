@@ -8,16 +8,35 @@ from logging.handlers import WatchedFileHandler
 class AppRunnerUtils:
 
     @classmethod
-    def get_s3_bucket(cls):
-        key_id = os.environ.get("AWS_ACCESS_KEY_ID")
-        secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
-        region = os.environ.get("AWS_REGION")
-        bucket = os.environ.get("AWS_DATASET_BUCKET")
-        session = boto3.session.Session(aws_access_key_id=key_id,
-                                        aws_secret_access_key=secret_key,
-                                        region_name=region)
-        s3 = session.resource('s3')
-        return s3.Bucket(bucket)
+    def get_s3_bucket(cls, external_bucket=None):
+        if external_bucket:
+            role_arn = os.environ.get("ROLE_ARN")
+            credentials = cls.assume_role(role_arn)
+            session = boto3.session.Session(aws_access_key_id=credentials['AccessKeyId'],
+                                            aws_secret_access_key=credentials['SecretAccessKey'],
+                                            aws_session_token=credentials['SessionToken'])
+            s3 = session.resource('s3')
+            return s3.Bucket(external_bucket)
+        else:
+            key_id = os.environ.get("AWS_ACCESS_KEY_ID")
+            secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
+            region = os.environ.get("AWS_REGION")
+            bucket = os.environ.get("AWS_DATASET_BUCKET")
+            session = boto3.session.Session(aws_access_key_id=key_id,
+                                            aws_secret_access_key=secret_key,
+                                            region_name=region)
+            s3 = session.resource('s3')
+            return s3.Bucket(bucket)
+
+    @classmethod
+    def assume_role(cls, role_arn):
+        sts_client = boto3.client('sts')
+        assumed_role = sts_client.assume_role(
+            RoleArn=role_arn,
+            RoleSessionName="YourSessionName"
+        )
+        credentials = assumed_role['Credentials']
+        return credentials
 
     @classmethod
     def upload_results(cls, job_id: str, results: dict):
@@ -51,14 +70,22 @@ class AppRunnerUtils:
     @classmethod
     def upload_result_files(cls, job_id: str, src_files: list):
         dest = cls.get_job_folder(job_id)
-        bucket = cls.get_s3_bucket()
+        external_bucket = None
+        if "EXTERNAL_BUCKET" in os.environ and "SAVE_RESULTS_TO_USER_DATA" in os.environ and eval(
+                os.environ.get("SAVE_RESULTS_TO_USER_DATA")):
+            external_bucket = os.environ.get("EXTERNAL_BUCKET")
+        bucket = cls.get_s3_bucket(external_bucket)
         for src_file in src_files:
             cls._upload(bucket, src_file, dest)
 
     @classmethod
     def upload_file(cls, job_id: str, src_file: str):
         dest = cls.get_job_folder(job_id)
-        bucket = cls.get_s3_bucket()
+        external_bucket = None
+        if "EXTERNAL_BUCKET" in os.environ and "SAVE_RESULTS_TO_USER_DATA" in os.environ and eval(
+                os.environ.get("SAVE_RESULTS_TO_USER_DATA")):
+            external_bucket = os.environ.get("EXTERNAL_BUCKET")
+        bucket = cls.get_s3_bucket(external_bucket)
         cls._upload(bucket, src_file, dest)
 
     @classmethod
@@ -71,7 +98,12 @@ class AppRunnerUtils:
 
     @classmethod
     def download_file(cls, source_file_path: str, dest_file_path: str):
-        bucket = cls.get_s3_bucket()
+        config_v2 = cls.get_job_config_v2(os.environ.get("JOB_ID"))
+        external_bucket = None
+        if "EXTERNAL_BUCKET" in os.environ and cls.get_file_is_remote(source_file_path, config_v2):
+            external_bucket = os.environ.get("EXTERNAL_BUCKET")
+
+        bucket = cls.get_s3_bucket(external_bucket)
         obj = bucket.Object(source_file_path)
         f = open(dest_file_path, "wb")
         f.write(obj.get()['Body'].read())
@@ -79,7 +111,12 @@ class AppRunnerUtils:
 
     @classmethod
     def load_file(cls, source_file_path: str):
-        bucket = cls.get_s3_bucket()
+        config_v2 = cls.get_job_config_v2(os.environ.get("JOB_ID"))
+        external_bucket = None
+        if "EXTERNAL_BUCKET" in os.environ and cls.get_file_is_remote(source_file_path, config_v2):
+            external_bucket = os.environ.get("EXTERNAL_BUCKET")
+
+        bucket = cls.get_s3_bucket(external_bucket)
         obj = bucket.Object(source_file_path)
         body = obj.get()['Body'].read()
         return body
@@ -129,6 +166,13 @@ class AppRunnerUtils:
                 return response.json()['config']
             else:
                 logging.error(response)
+
+    @classmethod
+    def get_file_is_remote(cls, file_path: str, config):
+        for key, items in config['input_files'].items():
+            for item in items:
+                if item["path"] == file_path:
+                    return item["additional_info"].get('user_data', False)
 
     @classmethod
     def get_job_run_by_admin(cls):
@@ -191,4 +235,3 @@ class AppRunnerUtils:
             return response.json()['has_enough_credits']
         else:
             logging.error(response)
-
