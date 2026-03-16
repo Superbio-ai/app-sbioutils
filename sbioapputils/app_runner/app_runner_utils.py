@@ -105,7 +105,7 @@ class AppRunnerUtils:
         dest = cls.get_job_folder(job_id)
         external_bucket = None
         if "EXTERNAL_BUCKET" in os.environ and "SAVE_RESULTS_TO_USER_DATA" in os.environ and eval(
-                os.environ.get("SAVE_RESULTS_TO_USER_DATA")):
+                os.environ.get("SAVE_RESULTS_TO_USER_DATA", "False")):
             external_bucket = os.environ.get("EXTERNAL_BUCKET")
         s3_client, bucket_name = cls.get_s3_client(external_bucket)
         for src_file in src_files:
@@ -116,7 +116,7 @@ class AppRunnerUtils:
         dest = cls.get_job_folder(job_id)
         external_bucket = None
         if "EXTERNAL_BUCKET" in os.environ and "SAVE_RESULTS_TO_USER_DATA" in os.environ and eval(
-                os.environ.get("SAVE_RESULTS_TO_USER_DATA")):
+                os.environ.get("SAVE_RESULTS_TO_USER_DATA", "False")):
             external_bucket = os.environ.get("EXTERNAL_BUCKET")
         s3_client, bucket_name = cls.get_s3_client(external_bucket)
         cls._upload(s3_client, bucket_name, src_file, dest)
@@ -183,8 +183,7 @@ class AppRunnerUtils:
     @classmethod
     def get_job_config(cls, job_id: str):
         if "JOB_CONFIG" in os.environ:
-            response = eval(os.environ.get("JOB_CONFIG"))
-            return response
+            return eval(os.environ.get("JOB_CONFIG", "{}"))
         else:
             token = cls.get_api_token()
             api_url = os.environ.get("SBIO_API_URL")
@@ -205,16 +204,14 @@ class AppRunnerUtils:
     @classmethod
     def get_job_run_by_admin(cls):
         if "RUN_BY_ADMIN" in os.environ:
-            response = eval(os.environ.get("RUN_BY_ADMIN"))
-            return response
+            return eval(os.environ.get("RUN_BY_ADMIN", "False"))
         else:
             return False
 
     @classmethod
     def get_job_config_v2(cls, job_id: str):
         if "JOB_CONFIG" in os.environ:
-            response = eval(os.environ.get("JOB_CONFIG"))
-            return response
+            return eval(os.environ.get("JOB_CONFIG", "{}"))
         else:
             token = cls.get_api_token()
             api_url = os.environ.get("SBIO_API_URL")
