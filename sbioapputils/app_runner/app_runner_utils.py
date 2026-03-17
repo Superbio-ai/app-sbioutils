@@ -104,8 +104,7 @@ class AppRunnerUtils:
     def upload_result_files(cls, job_id: str, src_files: list):
         dest = cls.get_job_folder(job_id)
         external_bucket = None
-        if "EXTERNAL_BUCKET" in os.environ and "SAVE_RESULTS_TO_USER_DATA" in os.environ and eval(
-                os.environ.get("SAVE_RESULTS_TO_USER_DATA", "False")):
+        if "EXTERNAL_BUCKET" in os.environ and os.environ.get("SAVE_RESULTS_TO_USER_DATA", "").lower() in ("true", "1", "yes"):
             external_bucket = os.environ.get("EXTERNAL_BUCKET")
         s3_client, bucket_name = cls.get_s3_client(external_bucket)
         for src_file in src_files:
@@ -115,8 +114,7 @@ class AppRunnerUtils:
     def upload_file(cls, job_id: str, src_file: str):
         dest = cls.get_job_folder(job_id)
         external_bucket = None
-        if "EXTERNAL_BUCKET" in os.environ and "SAVE_RESULTS_TO_USER_DATA" in os.environ and eval(
-                os.environ.get("SAVE_RESULTS_TO_USER_DATA", "False")):
+        if "EXTERNAL_BUCKET" in os.environ and os.environ.get("SAVE_RESULTS_TO_USER_DATA", "").lower() in ("true", "1", "yes"):
             external_bucket = os.environ.get("EXTERNAL_BUCKET")
         s3_client, bucket_name = cls.get_s3_client(external_bucket)
         cls._upload(s3_client, bucket_name, src_file, dest)
