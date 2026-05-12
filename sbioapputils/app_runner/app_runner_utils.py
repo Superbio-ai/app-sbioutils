@@ -1,10 +1,19 @@
 import boto3
+import botocore.config
 import logging
 import os
 import requests
 from logging.handlers import WatchedFileHandler
 
 from sbioapputils.app_runner.s3_transfer import multipart_download, multipart_upload
+
+# boto3's default urllib3 pool is 10 connections, but TransferConfig
+# scales up to 20 concurrent threads for large files.  Align the pool
+# so connections aren't discarded under load.
+_S3_CLIENT_CONFIG = botocore.config.Config(
+    max_pool_connections=25,
+    retries={"max_attempts": 3, "mode": "adaptive"},
+)
 
 
 class AppRunnerUtils:
@@ -50,6 +59,7 @@ class AppRunnerUtils:
                 aws_secret_access_key=credentials['SecretAccessKey'],
                 aws_session_token=credentials['SessionToken'],
                 region_name=os.environ.get("AWS_REGION"),
+                config=_S3_CLIENT_CONFIG,
             )
             return s3_client, external_bucket
         else:
@@ -58,6 +68,7 @@ class AppRunnerUtils:
                 aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
                 aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
                 region_name=os.environ.get("AWS_REGION"),
+                config=_S3_CLIENT_CONFIG,
             )
             return s3_client, os.environ.get("AWS_DATASET_BUCKET")
 
@@ -176,7 +187,8 @@ class AppRunnerUtils:
         if response.status_code == 200:
             return response.json()['folder']
         else:
-            logging.error(response)
+            logging.error("get_job_folder failed: %s %s", response.status_code, response.text)
+            response.raise_for_status()
 
     @classmethod
     def get_job_config(cls, job_id: str):
@@ -190,7 +202,8 @@ class AppRunnerUtils:
             if response.status_code == 200:
                 return response.json()['config']
             else:
-                logging.error(response)
+                logging.error("get_job_config failed: %s %s", response.status_code, response.text)
+                response.raise_for_status()
 
     @classmethod
     def get_file_is_remote(cls, file_path: str, config):
@@ -218,14 +231,18 @@ class AppRunnerUtils:
             if response.status_code == 200:
                 return response.json()['config']
             else:
-                logging.error(response)
+                logging.error("get_job_config_v2 failed: %s %s", response.status_code, response.text)
+                response.raise_for_status()
 
     @classmethod
     def set_job_running(cls, job_id: str):
         token = cls.get_api_token()
         api_url = os.environ.get("SBIO_API_URL")
         headers = {'Authorization': f'Bearer {token}'}
-        requests.put(f'{api_url}/api/jobs/{job_id}/running', headers=headers)
+        response = requests.put(f'{api_url}/api/jobs/{job_id}/running', headers=headers)
+        if response.status_code != 200:
+            logging.error("set_job_running failed: %s %s", response.status_code, response.text)
+        response.raise_for_status()
 
     @classmethod
     def set_job_completed(cls, job_id: str, result_files: dict, credit=0):
@@ -235,7 +252,10 @@ class AppRunnerUtils:
         payload = {'result_files': {'files': result_files}}
         if credit > 0:
             payload['credits'] = credit
-        requests.put(f'{api_url}/api/jobs/{job_id}/completed', headers=headers, json=payload)
+        response = requests.put(f'{api_url}/api/jobs/{job_id}/completed', headers=headers, json=payload)
+        if response.status_code != 200:
+            logging.error("set_job_completed failed: %s %s", response.status_code, response.text)
+        response.raise_for_status()
 
     @classmethod
     def set_job_failed(cls, job_id: str, err_msg: str, credit=0):
@@ -245,7 +265,9 @@ class AppRunnerUtils:
         payload = {'error_message': err_msg}
         if credit > 0:
             payload['credits'] = credit
-        requests.put(f'{api_url}/api/jobs/{job_id}/failed', headers=headers, json=payload)
+        response = requests.put(f'{api_url}/api/jobs/{job_id}/failed', headers=headers, json=payload)
+        if response.status_code != 200:
+            logging.error("set_job_failed failed: %s %s", response.status_code, response.text)
 
     @classmethod
     def verify_user_has_enough_credits(cls, job_id: str, expected_credit_usage: int):
@@ -257,4 +279,5 @@ class AppRunnerUtils:
         if response.status_code == 200:
             return response.json()['has_enough_credits']
         else:
-            logging.error(response)
+            logging.error("verify_user_has_enough_credits failed: %s %s", response.status_code, response.text)
+            response.raise_for_status()
