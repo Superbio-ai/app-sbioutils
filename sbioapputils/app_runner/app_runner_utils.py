@@ -245,6 +245,21 @@ class AppRunnerUtils:
         response.raise_for_status()
 
     @classmethod
+    def set_modal_usage(cls, job_id: str, modal_usage: dict):
+        """Report the Modal Cloud compute a job ran (gpu / count / seconds).
+
+        Billed on top of the Fargate container cost when crediting the job.
+        """
+        token = cls.get_api_token()
+        api_url = os.environ.get("SBIO_API_URL")
+        headers = {'Authorization': f'Bearer {token}'}
+        payload = {'modal_usage': modal_usage}
+        response = requests.put(f'{api_url}/api/jobs/{job_id}/modal_usage', headers=headers, json=payload)
+        if response.status_code != 200:
+            logging.error("set_modal_usage failed: %s %s", response.status_code, response.text)
+        response.raise_for_status()
+
+    @classmethod
     def set_job_completed(cls, job_id: str, result_files: dict, credit=0):
         token = cls.get_api_token()
         api_url = os.environ.get("SBIO_API_URL")
