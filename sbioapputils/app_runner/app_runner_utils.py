@@ -191,19 +191,26 @@ class AppRunnerUtils:
             response.raise_for_status()
 
     @classmethod
+    def _fetch_job_config(cls, job_id: str, version: str = None):
+        """GET a job's config from central. version="v2" for config_v2, else v1."""
+        token = cls.get_api_token()
+        api_url = os.environ.get("SBIO_API_URL")
+        headers = {'Authorization': f'Bearer {token}'}
+        url = f'{api_url}/api/jobs/{job_id}/config'
+        if version:
+            url += f'?version={version}'
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json()['config']
+        logging.error("get_job_config (%s) failed: %s %s", version or "v1",
+                      response.status_code, response.text)
+        response.raise_for_status()
+
+    @classmethod
     def get_job_config(cls, job_id: str):
         if "JOB_CONFIG" in os.environ:
             return eval(os.environ.get("JOB_CONFIG", "{}"))
-        else:
-            token = cls.get_api_token()
-            api_url = os.environ.get("SBIO_API_URL")
-            headers = {'Authorization': f'Bearer {token}'}
-            response = requests.get(f'{api_url}/api/jobs/{job_id}/config', headers=headers)
-            if response.status_code == 200:
-                return response.json()['config']
-            else:
-                logging.error("get_job_config failed: %s %s", response.status_code, response.text)
-                response.raise_for_status()
+        return cls._fetch_job_config(job_id)
 
     @classmethod
     def get_file_is_remote(cls, file_path: str, config):
@@ -223,16 +230,13 @@ class AppRunnerUtils:
     def get_job_config_v2(cls, job_id: str):
         if "JOB_CONFIG" in os.environ:
             return eval(os.environ.get("JOB_CONFIG", "{}"))
-        else:
-            token = cls.get_api_token()
-            api_url = os.environ.get("SBIO_API_URL")
-            headers = {'Authorization': f'Bearer {token}'}
-            response = requests.get(f'{api_url}/api/jobs/{job_id}/config?version=v2', headers=headers)
-            if response.status_code == 200:
-                return response.json()['config']
-            else:
-                logging.error("get_job_config_v2 failed: %s %s", response.status_code, response.text)
-                response.raise_for_status()
+        config = cls._fetch_job_config(job_id, version="v2")
+        if not config:
+            # Not every app has a v2 config — fall back to the v1 config so
+            # those apps still run instead of crashing on a None config.
+            logging.info("Job %s has no v2 config, falling back to v1", job_id)
+            config = cls._fetch_job_config(job_id)
+        return config
 
     @classmethod
     def set_job_running(cls, job_id: str):
@@ -242,6 +246,21 @@ class AppRunnerUtils:
         response = requests.put(f'{api_url}/api/jobs/{job_id}/running', headers=headers)
         if response.status_code != 200:
             logging.error("set_job_running failed: %s %s", response.status_code, response.text)
+        response.raise_for_status()
+
+    @classmethod
+    def set_modal_usage(cls, job_id: str, modal_usage: dict):
+        """Report the Modal Cloud compute a job ran (gpu / count / seconds).
+
+        Billed on top of the Fargate container cost when crediting the job.
+        """
+        token = cls.get_api_token()
+        api_url = os.environ.get("SBIO_API_URL")
+        headers = {'Authorization': f'Bearer {token}'}
+        payload = {'modal_usage': modal_usage}
+        response = requests.put(f'{api_url}/api/jobs/{job_id}/modal_usage', headers=headers, json=payload)
+        if response.status_code != 200:
+            logging.error("set_modal_usage failed: %s %s", response.status_code, response.text)
         response.raise_for_status()
 
     @classmethod
