@@ -3,7 +3,10 @@ import botocore.config
 import logging
 import os
 import requests
+import signal
+import time
 from logging.handlers import WatchedFileHandler
+from typing import Optional
 
 from sbioapputils.app_runner.s3_transfer import multipart_download, multipart_upload
 
@@ -14,6 +17,41 @@ _S3_CLIENT_CONFIG = botocore.config.Config(
     max_pool_connections=25,
     retries={"max_attempts": 3, "mode": "adaptive"},
 )
+
+SIGTERM_MESSAGE = "Job terminated (SIGTERM): cancelled or time limit reached"
+
+
+class JobTerminated(Exception):
+    """Raised in the main thread when the container receives SIGTERM."""
+
+
+def _is_client_error(exc: Exception) -> bool:
+    response = getattr(exc, "response", None)
+    return isinstance(exc, requests.HTTPError) and response is not None and 400 <= response.status_code < 500
+
+
+def _retry(fn, *args, retries=4, backoff=5, **kwargs):
+    """Call *fn*, retrying transient failures with exponential backoff.
+
+    HTTP 4xx responses are not retried: the request itself is rejected and
+    repeating it cannot succeed.
+    """
+    for attempt in range(1, retries + 1):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as exc:
+            if attempt == retries or _is_client_error(exc):
+                raise
+            wait = backoff * (2 ** (attempt - 1))
+            logging.warning(
+                "Attempt %d/%d for %s failed (%s). Retrying in %ds...",
+                attempt, retries, fn.__name__, exc, wait,
+            )
+            time.sleep(wait)
+
+
+def _raise_job_terminated(signum, frame):
+    raise JobTerminated(SIGTERM_MESSAGE)
 
 
 class AppRunnerUtils:
@@ -176,6 +214,7 @@ class AppRunnerUtils:
         api_url = os.environ.get("SBIO_API_URL")
         payload = {"email": user, "password": password}
         r = requests.post(f'{api_url}/login', json=payload)
+        r.raise_for_status()
         return r.json()['access_token']
 
     @classmethod
@@ -268,6 +307,38 @@ class AppRunnerUtils:
         response = requests.put(f'{api_url}/api/jobs/{job_id}/failed', headers=headers, json=payload)
         if response.status_code != 200:
             logging.error("set_job_failed failed: %s %s", response.status_code, response.text)
+        response.raise_for_status()
+
+    @classmethod
+    def finish_job(cls, job_id: str, log_file: str, *, error: Optional[str] = None,
+                   result_files: Optional[dict] = None, retries: int = 4):
+        """Report the job's terminal status; the single exit point for runners.
+
+        The log is uploaded first so it is already in S3 when the Backend
+        marks the job terminal and readers (UI, agent wake) look for it.
+        A failed log upload does not block the status report: a job stuck in
+        Running is worse than a job without a log.
+        """
+        try:
+            _retry(cls.upload_file, job_id, log_file, retries=retries)
+        except Exception:
+            logging.exception("Could not upload %s for job %s", log_file, job_id)
+
+        if error is None:
+            _retry(cls.set_job_completed, job_id, result_files or {}, retries=retries)
+        else:
+            _retry(cls.set_job_failed, job_id, error, retries=retries)
+
+    @classmethod
+    def install_sigterm_handler(cls):
+        """Turn SIGTERM into ``JobTerminated`` raised in the main thread.
+
+        AWS Batch sends SIGTERM on cancel or timeout and SIGKILL ~30s later.
+        The handler only raises, so cleanup runs in the runner's normal
+        ``except`` path rather than inside the signal handler. Call
+        ``finish_job(..., retries=1)`` there to stay within the 30s window.
+        """
+        signal.signal(signal.SIGTERM, _raise_job_terminated)
 
     @classmethod
     def verify_user_has_enough_credits(cls, job_id: str, expected_credit_usage: int):
